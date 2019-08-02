@@ -10,9 +10,8 @@ func NewQueryCommand(run Runner, isKeepRunning bool) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   CmdQuery,
 		Short: "Query commands",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Run: func(cmd *cobra.Command, args []string) {
 			log.Warn("not implemented yet!")
-			return nil
 		},
 	}
 	return cmd

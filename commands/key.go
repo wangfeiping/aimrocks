@@ -5,11 +5,11 @@ import (
 	"github.com/wangfeiping/aimrocks/log"
 )
 
-// NewAccountCommand returns account command
-func NewAccountCommand(run Runner, isKeepRunning bool) *cobra.Command {
+// NewKeyCommand returns key command
+func NewKeyCommand(run Runner, isKeepRunning bool) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   CmdAccount,
-		Short: "Account commands",
+		Use:   CmdKey,
+		Short: "Key commands",
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Warn("not implemented yet!")
 		},

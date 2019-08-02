@@ -29,8 +29,14 @@ const (
 	// CmdAccount string of account command
 	CmdAccount = "account"
 
+	// CmdKey string of key command
+	CmdKey = "key"
+
 	// CmdTx string of tx command
 	CmdTx = "tx"
+
+	// CmdTxSend string of tx send command
+	CmdTxSend = "send"
 
 	// CmdQuery string of query command
 	CmdQuery = "query"
