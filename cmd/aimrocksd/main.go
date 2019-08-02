@@ -11,6 +11,7 @@ func main() {
 	root := commands.NewRootCommand(versioner)
 	root.AddCommand(
 		commands.NewStartCommand(nil, true),
+		commands.NewInitCommand(nil, false),
 		commands.NewAccountCommand(nil, false),
 		commands.NewKeyCommand(nil, false),
 		commands.NewTxCommand(nil, false),

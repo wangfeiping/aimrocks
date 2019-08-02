@@ -23,6 +23,9 @@ const (
 	// CmdHelp string of help command
 	CmdHelp = "help"
 
+	// CmdInit string of init command
+	CmdInit = "init"
+
 	// CmdStart string of start command
 	CmdStart = "start"
 
