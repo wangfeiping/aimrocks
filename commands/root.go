@@ -9,6 +9,7 @@ import (
 
 	"github.com/cihub/seelog"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/wangfeiping/aimrocks/config"
 	"github.com/wangfeiping/aimrocks/log"
 )
@@ -48,6 +49,23 @@ const (
 	ShortDescription = "A demo for blockchain"
 )
 
+const (
+	// FlagVersion show version info
+	FlagVersion = "version"
+
+	// FlagFrom specify one or more transfer out addresses
+	FlagFrom = "from"
+
+	// FlagFromAmount amount of coins to send
+	FlagFromAmount = "fromamount"
+
+	// FlagTo specify one or more transfer in addresses
+	FlagTo = "to"
+
+	// FlagToAmount amount of coins to receive
+	FlagToAmount = "toamount"
+)
+
 // Runner is command call function
 type Runner func() (context.CancelFunc, error)
 
@@ -57,16 +75,16 @@ func NewRootCommand(versioner Runner) *cobra.Command {
 		Use:   CmdRoot,
 		Short: ShortDescription,
 		Run: func(cmd *cobra.Command, args []string) {
-			if config.GetConfig().ShowVersion {
+			if viper.GetBool(FlagVersion) {
 				versioner()
 				return
 			}
 			cmd.Help()
 		},
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
-			// if strings.EqualFold(cmd.Use, CmdRoot) ||
-			// 	strings.EqualFold(cmd.Use, CmdVersion) ||
-			// 	strings.HasPrefix(cmd.Use, CmdHelp) {
+			if err := viper.BindPFlags(cmd.Flags()); err != nil {
+				return err
+			}
 			if !strings.EqualFold(cmd.Use, CmdStart) {
 				// doesn't need init log and config
 				return nil
@@ -86,9 +104,9 @@ func NewRootCommand(versioner Runner) *cobra.Command {
 			return
 		},
 	}
-	// root.Version = "asd"
-	root.Flags().BoolVarP(&config.GetConfig().ShowVersion,
-		"version", "v", false, "Show version info")
+
+	root.Flags().BoolP("version", "v", false, "Show version info")
+
 	return root
 }
 

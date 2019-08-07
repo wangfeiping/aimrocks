@@ -6,7 +6,7 @@ import (
 )
 
 // NewTxCommand returns tx command
-func NewTxCommand(run Runner, isKeepRunning bool) *cobra.Command {
+func NewTxCommand(run Runner) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   CmdTx,
 		Short: "Transactions commands",
@@ -16,38 +16,17 @@ func NewTxCommand(run Runner, isKeepRunning bool) *cobra.Command {
 		Use:   CmdTxSend,
 		Short: "Send transaction(s) to ...",
 		Run: func(cmd *cobra.Command, args []string) {
-			log.Warn("not implemented yet!")
-
-			// direct to QOS
-			// Tx will be sent directly to QOS
-
-			// qstars/bank/processmultitrans.go/MultiSendDirect(...)
-			//
-			// address:
-			//     utility.PubAddrRetrievalFromAmino(...)
-			//     types.AccAddressFromBech32(...)
-			//     account.AddressStoreKey(...)
-			//
-			// transactions:
-			//     tx.NewTransferMultiple(...)
-			//     genStdSendMultiTx(...)
-			//
-			// submit tx:
-			//     cliCtx := *config.GetCLIContext().QOSCliContext
-			//     utils.SendTx(...)
-
-			// relay to QOS
-			// Tx will be sent to the AimRocksD,
-			// and then Cassini will relay the Tx from AimRocksD to QOS
-
-			// MultiSendViaQStars(...)
-			//
-			// submit tx:
-			//     cliCtx := *config.GetCLIContext().QSCCliContext
-			//     utils.SendTx(...)
-
+			if _, err := run(); err != nil {
+				log.Error("Send tx error: ", err)
+			}
+			return
 		},
 	}
+
+	send.Flags().String(FlagFrom, "", "One or more transfer out addresses")
+	send.Flags().String(FlagFromAmount, "", "Amount of coins to transfer out")
+	send.Flags().String(FlagTo, "", "One or more transfer in addresses")
+	send.Flags().String(FlagToAmount, "", "Amount of coins to transfer in")
 
 	cmd.AddCommand(send)
 

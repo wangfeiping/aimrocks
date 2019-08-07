@@ -8,9 +8,6 @@ type Config struct {
 
 	// LogConfigFile path of log config file
 	LogConfigFile string
-
-	// ShowVersion flag that show version info
-	ShowVersion bool
 }
 
 var conf = &Config{}

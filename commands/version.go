@@ -5,7 +5,7 @@ import (
 )
 
 // NewVersionCommand returns version command
-func NewVersionCommand(run Runner, isKeepRunning bool) *cobra.Command {
+func NewVersionCommand(run Runner) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   CmdVersion,
 		Short: "Show version info",
