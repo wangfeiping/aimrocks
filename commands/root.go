@@ -4,9 +4,12 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 
+	qstarconfig "github.com/QOSGroup/qstars/config"
+	"github.com/QOSGroup/qstars/star"
 	"github.com/cihub/seelog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -14,44 +17,25 @@ import (
 	"github.com/wangfeiping/aimrocks/log"
 )
 
+// nolint
 const (
-	// CmdRoot string of root command
-	CmdRoot = "aimrocksd"
-
-	// CmdVersion string of version command
-	CmdVersion = "version"
-
-	// CmdHelp string of help command
-	CmdHelp = "help"
-
-	// CmdInit string of init command
-	CmdInit = "init"
-
-	// CmdStart string of start command
-	CmdStart = "start"
-
-	// CmdAccount string of account command
-	CmdAccount = "account"
-
-	// CmdKey string of key command
-	CmdKey = "key"
-
-	// CmdTx string of tx command
-	CmdTx = "tx"
-
-	// CmdTxSend string of tx send command
-	CmdTxSend = "send"
-
-	// CmdQuery string of query command
-	CmdQuery = "query"
-
-	// ShortDescription string of short description
+	CmdRoot          = "aimrocksd"
+	CmdStart         = "start"
+	CmdInit          = "init"
+	CmdAccount       = "account"
+	CmdKey           = "key"
+	CmdTx            = "tx"
+	CmdTxSend        = "send"
+	CmdQuery         = "query"
+	CmdVersion       = "version"
+	CmdHelp          = "help"
 	ShortDescription = "A demo for blockchain"
 )
 
 // nolint
 const (
 	FlagVersion    = "version"
+	FlagHome       = "home"
 	FlagFrom       = "from"
 	FlagFromAmount = "fromamount"
 	FlagTo         = "to"
@@ -81,23 +65,16 @@ func NewRootCommand(versioner Runner) *cobra.Command {
 				log.Error("bind flags error: ", err)
 				return err
 			}
-			// init config
-			// err = initConfig()
-			// if err != nil {
-			// 	return err
-			// }
+
+			initConfig()
+
 			if !strings.EqualFold(cmd.Use, CmdStart) {
 				// doesn't need init log
 				return nil
 			}
-			// init logger
-			var logger seelog.LoggerInterface
-			logger, err = log.LoadLogger(config.GetConfig().LogConfigFile)
-			if err != nil {
-				log.Warn("Used the default logger because error: ", err)
-			} else {
-				log.Replace(logger)
-			}
+
+			initLogger()
+
 			return
 		},
 	}
@@ -105,6 +82,58 @@ func NewRootCommand(versioner Runner) *cobra.Command {
 	root.Flags().BoolP("version", "v", false, "Show version info")
 
 	return root
+}
+
+func initConfig() error {
+	// cfg := &qstarconfig.CLIConfig{
+	// 	QSCChainID:    "dawns-3001",
+	// 	QOSChainID:    "capricorn-3000",
+	// 	QOSNodeURI:    "localhost:26657",
+	// 	QSTARSNodeURI: "localhost:26658"}
+	// config.CreateCLIContextTwo(cdc, cfg)
+
+	log.Debug("home: ", viper.GetString("home"))
+
+	homeDir := viper.GetString(FlagHome)
+	viper.Set(FlagHome, homeDir)
+	// Sets name for the config file.
+	// Does not include extension.
+	viper.SetConfigName("config")
+	// Adds a path for Viper to search for the config file in.
+	viper.AddConfigPath(filepath.Join(homeDir, "config"))
+	// Can be called multiple times to define multiple search paths.
+	viper.AddConfigPath(homeDir)
+
+	// If a config file is found, read it in.
+	if err := viper.ReadInConfig(); err == nil {
+		// stderr, so if we redirect output to json file, this doesn't appear
+		// fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+	} else if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+		// ignore not found error, return other errors
+		return err
+	}
+
+	cfg, err := qstarconfig.InterceptLoadConfig()
+	if err != nil {
+		log.Error("init config error: ", err)
+		return err
+	}
+
+	log.Debug("QOSNodeURI: ", cfg.QOSNodeURI)
+	log.Debug("QSTARSNodeURI: ", cfg.QSTARSNodeURI)
+	cdc := star.MakeCodec()
+	qstarconfig.CreateCLIContextTwo(cdc, cfg)
+	return nil
+}
+
+func initLogger() {
+	var logger seelog.LoggerInterface
+	logger, err := log.LoadLogger(config.GetConfig().LogConfigFile)
+	if err != nil {
+		log.Warn("Used the default logger because error: ", err)
+	} else {
+		log.Replace(logger)
+	}
 }
 
 func commandRunner(run Runner, isKeepRunning bool) error {

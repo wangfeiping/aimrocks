@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	qbasetypes "github.com/QOSGroup/qbase/types"
-	"github.com/QOSGroup/qstars/config"
 	"github.com/QOSGroup/qstars/star"
 	sdk "github.com/QOSGroup/qstars/types"
 	"github.com/QOSGroup/qstars/wire"
@@ -25,13 +24,6 @@ var txSend = func() (context.CancelFunc, error) {
 	log.Debug("from addrs: ", len(fromAddrs))
 
 	cdc := star.MakeCodec()
-
-	cfg := &config.CLIConfig{
-		QSCChainID:    "dawns-3001",
-		QOSChainID:    "capricorn-3000",
-		QOSNodeURI:    "localhost:26657",
-		QSTARSNodeURI: "localhost:26658"}
-	config.CreateCLIContextTwo(cdc, cfg)
 
 	from := []string{"oSXr2kEsWgw8L9ydeLOLM9Q8A6g+HhMW5sAdrKkycdDoiLLNrfCkR5P+7gNiYDSuyW390yhbnCv4+PXhhf/O0w=="}
 	var result *bank.SendResult
@@ -111,9 +103,9 @@ func parse(as assembler, str string) (err error) {
 	} else {
 		strs = strings.Split(str, ",")
 	}
-	log.Debug("parsing: ", len(strs))
-	for _, addr := range strs {
-		log.Debug("string: ", addr)
+	log.Tracef("parsing: %d, %s", len(strs), str)
+	for i, addr := range strs {
+		log.Tracef("%d: %s", i, addr)
 		err = as(addr)
 		if err != nil {
 			return err
