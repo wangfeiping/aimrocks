@@ -49,21 +49,16 @@ const (
 	ShortDescription = "A demo for blockchain"
 )
 
+// nolint
 const (
-	// FlagVersion show version info
-	FlagVersion = "version"
-
-	// FlagFrom specify one or more transfer out addresses
-	FlagFrom = "from"
-
-	// FlagFromAmount amount of coins to send
+	FlagVersion    = "version"
+	FlagFrom       = "from"
 	FlagFromAmount = "fromamount"
-
-	// FlagTo specify one or more transfer in addresses
-	FlagTo = "to"
-
-	// FlagToAmount amount of coins to receive
-	FlagToAmount = "toamount"
+	FlagTo         = "to"
+	FlagToAmount   = "toamount"
+	FlagRelay      = "relay"
+	FlagTrustNode  = "trust-node"
+	FlagMaxGas     = "max-gas"
 )
 
 // Runner is command call function
@@ -83,10 +78,16 @@ func NewRootCommand(versioner Runner) *cobra.Command {
 		},
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
 			if err := viper.BindPFlags(cmd.Flags()); err != nil {
+				log.Error("bind flags error: ", err)
 				return err
 			}
+			// init config
+			// err = initConfig()
+			// if err != nil {
+			// 	return err
+			// }
 			if !strings.EqualFold(cmd.Use, CmdStart) {
-				// doesn't need init log and config
+				// doesn't need init log
 				return nil
 			}
 			// init logger
@@ -97,10 +98,6 @@ func NewRootCommand(versioner Runner) *cobra.Command {
 			} else {
 				log.Replace(logger)
 			}
-			// err = initConfig()
-			// if err != nil {
-			// 	return err
-			// }
 			return
 		},
 	}

@@ -7,18 +7,12 @@ import (
 	"github.com/wangfeiping/aimrocks/commands"
 )
 
+// nolint
 var (
-	// Version of cassini
-	Version = "0.0.0"
-
-	// GitCommit is the current HEAD set using ldflags.
+	Version   = "0.0.0"
 	GitCommit string
-
-	// GoVersion is version info of golang
 	GoVersion string
-
-	// BuidDate is compile date and time
-	BuidDate string
+	BuidDate  string
 )
 
 var versioner = func() (context.CancelFunc, error) {

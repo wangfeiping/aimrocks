@@ -4,13 +4,14 @@ import (
 	qbasetypes "github.com/QOSGroup/qbase/types"
 	"github.com/QOSGroup/qstars/types"
 	"github.com/QOSGroup/qstars/wire"
+	"github.com/QOSGroup/qstars/x/bank"
 	"github.com/wangfeiping/aimrocks/log"
 )
 
 // SendTx submit transaction to QOS or QSC
 func SendTx(fromAddrs []qbasetypes.Address, fromCoins []types.Coins,
 	toAddrs []qbasetypes.Address, toCoins []types.Coins,
-	cdc *wire.Codec) {
+	cdc *wire.Codec) (*bank.SendResult, error) {
 	// direct to QOS
 	// Tx will be sent directly to QOS
 
@@ -23,7 +24,7 @@ func SendTx(fromAddrs []qbasetypes.Address, fromCoins []types.Coins,
 	//
 	// transactions:
 	//     tx.NewTransferMultiple(...)
-	//     genStdSendMultiTx(...)
+	//     genStdSendMultiTx(...) !!! max-gas
 	//
 	// submit tx:
 	//     cliCtx := *config.GetCLIContext().QOSCliContext
