@@ -66,6 +66,12 @@ func NewRootCommand(versioner Runner) *cobra.Command {
 				return err
 			}
 
+			if strings.EqualFold(cmd.Use, CmdRoot) ||
+				strings.EqualFold(cmd.Use, CmdVersion) {
+				// doesn't need init config & log
+				return nil
+			}
+
 			initConfig()
 
 			if !strings.EqualFold(cmd.Use, CmdStart) {
