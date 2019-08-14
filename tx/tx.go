@@ -5,6 +5,8 @@ import (
 	"github.com/QOSGroup/qstars/types"
 	"github.com/QOSGroup/qstars/wire"
 	"github.com/QOSGroup/qstars/x/bank"
+	"github.com/spf13/viper"
+	"github.com/wangfeiping/aimrocks/commands"
 	"github.com/wangfeiping/aimrocks/log"
 )
 
@@ -44,4 +46,25 @@ func SendTx(fromAddrs []qbasetypes.Address, fromCoins []types.Coins,
 	log.Debug("from coins: ", len(fromCoins))
 	log.Debug("to addresses: ", len(toAddrs))
 	log.Debug("to coins: ", len(toCoins))
+
+	from := []string{"oSXr2kEsWgw8L9ydeLOLM9Q8A6g+HhMW5sAdrKkycdDoiLLNrfCkR5P+7gNiYDSuyW390yhbnCv4+PXhhf/O0w=="}
+	var result *bank.SendResult
+	var err error
+	// !!! must change max-gas code !!!
+	if viper.GetBool(commands.FlagRelay) {
+		log.Debug("tx send relay")
+		result, err = bank.MultiSendViaQStars(
+			cdc, from, toAddrs, fromCoins, toCoins)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		log.Debug("tx send direct")
+		result, err = bank.MultiSendDirect(
+			cdc, from, toAddrs, fromCoins, toCoins)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return result, err
 }

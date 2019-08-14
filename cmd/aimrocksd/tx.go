@@ -8,10 +8,10 @@ import (
 	"github.com/QOSGroup/qstars/star"
 	sdk "github.com/QOSGroup/qstars/types"
 	"github.com/QOSGroup/qstars/wire"
-	"github.com/QOSGroup/qstars/x/bank"
 	"github.com/spf13/viper"
 	"github.com/wangfeiping/aimrocks/commands"
 	"github.com/wangfeiping/aimrocks/log"
+	"github.com/wangfeiping/aimrocks/tx"
 )
 
 var txSend = func() (context.CancelFunc, error) {
@@ -21,21 +21,14 @@ var txSend = func() (context.CancelFunc, error) {
 		log.Error("flags parse error: ", err)
 		return nil, err
 	}
-	log.Debug("from addrs: ", len(fromAddrs))
 
 	cdc := star.MakeCodec()
 
-	from := []string{"oSXr2kEsWgw8L9ydeLOLM9Q8A6g+HhMW5sAdrKkycdDoiLLNrfCkR5P+7gNiYDSuyW390yhbnCv4+PXhhf/O0w=="}
-	var result *bank.SendResult
-	// !!! must change max-gas code !!!
-	result, err = bank.MultiSendDirect(cdc,
-		from, addrs, fromCoins, coins)
+	result, err := tx.SendTx(fromAddrs, fromCoins, addrs, coins, cdc)
 	if err != nil {
 		log.Error("tx send error: ", err)
 		return nil, err
 	}
-
-	// tx.SendTx(fromAddrs, fromCoins, addrs, coins, cdc)
 
 	output, err := wire.MarshalJSONIndent(cdc, result)
 	if err != nil {

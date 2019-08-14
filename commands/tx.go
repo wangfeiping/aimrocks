@@ -27,7 +27,8 @@ func NewTxCommand(run Runner) *cobra.Command {
 	send.Flags().String(FlagFromAmount, "", "Amount of coins to transfer out")
 	send.Flags().String(FlagTo, "", "One or more transfer in addresses")
 	send.Flags().String(FlagToAmount, "", "Amount of coins to transfer in")
-	send.Flags().Bool(FlagRelay, false, "Relay mode, transaction will be sent to QSC")
+	send.Flags().Bool(FlagRelay, false,
+		"Relay mode, transaction will be registered to the issuing chain")
 	send.Flags().Bool(FlagTrustNode, false, "Don't verify proofs for responses")
 	send.Flags().Int64(FlagMaxGas, 10000, "Max gas for transaction")
 	cmd.AddCommand(send)
