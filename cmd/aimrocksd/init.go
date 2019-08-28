@@ -10,7 +10,8 @@ import (
 
 var chainNodeInit = func() (context.CancelFunc, error) {
 	home := viper.GetString(commands.FlagHome)
+	config := viper.GetString(commands.FlagConfig)
 	log.Infof("chain node init... %s", home)
-
+	log.Infof("chain node init... %s", config)
 	return nil, nil
 }

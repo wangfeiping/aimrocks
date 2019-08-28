@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	qbasetypes "github.com/QOSGroup/qbase/types"
+	qstarsconfig "github.com/QOSGroup/qstars/config"
 	"github.com/QOSGroup/qstars/star"
 	sdk "github.com/QOSGroup/qstars/types"
 	"github.com/QOSGroup/qstars/wire"
@@ -15,14 +16,22 @@ import (
 )
 
 var txSend = func() (context.CancelFunc, error) {
+	log.Debug("QOSNodeURI: ", viper.GetString("qos_node_uri"))
+	log.Debug("QSTARSNodeURI: ", viper.GetString("qstars_node_uri"))
+	cdc := star.MakeCodec()
+	cfg := qstarsconfig.DefaultConfig()
+	err := viper.Unmarshal(cfg)
+	if err != nil {
+		return nil, err
+	}
+	qstarsconfig.CreateCLIContextTwo(cdc, cfg)
+
 	fromAddrs, fromCoins, addrs, coins, err :=
 		parseTxSendFlags()
 	if err != nil {
 		log.Error("flags parse error: ", err)
 		return nil, err
 	}
-
-	cdc := star.MakeCodec()
 
 	result, err := tx.SendTx(fromAddrs, fromCoins, addrs, coins, cdc)
 	if err != nil {

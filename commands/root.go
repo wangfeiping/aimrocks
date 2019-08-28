@@ -68,16 +68,6 @@ func initConfig() error {
 	config.Load(home, configFile)
 	log.Debugf("config file: %s", configFile)
 	viper.Set(FlagConfig, configFile)
-	// cfg, err := qstarconfig.InterceptLoadConfig()
-	// if err != nil {
-	// 	log.Error("init config error: ", err)
-	// 	return err
-	// }
-
-	// log.Debug("QOSNodeURI: ", cfg.QOSNodeURI)
-	// log.Debug("QSTARSNodeURI: ", cfg.QSTARSNodeURI)
-	// cdc := star.MakeCodec()
-	// qstarconfig.CreateCLIContextTwo(cdc, cfg)
 	return nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/viper"
 	"github.com/wangfeiping/aimrocks/log"
@@ -64,8 +65,11 @@ func Check(home, configFile string) string {
 	if file == "" {
 		file = DefaultConfigFile
 	}
-	configFile = filepath.Join(dir, file)
-	return configFile
+	file = filepath.Join(dir, file)
+	if strings.EqualFold(file, DefaultConfigFile) {
+		return configFile
+	}
+	return file
 }
 
 // Create writes a new config file
