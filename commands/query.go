@@ -6,7 +6,7 @@ import (
 )
 
 // NewQueryCommand returns query command
-func NewQueryCommand(run Runner, isKeepRunning bool) *cobra.Command {
+func NewQueryCommand(run Runner) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   CmdQuery,
 		Short: "Query commands",

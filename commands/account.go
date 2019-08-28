@@ -6,7 +6,7 @@ import (
 )
 
 // NewAccountCommand returns account command
-func NewAccountCommand(run Runner, isKeepRunning bool) *cobra.Command {
+func NewAccountCommand(run Runner) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   CmdAccount,
 		Short: "Account commands",

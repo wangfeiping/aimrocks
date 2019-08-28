@@ -6,7 +6,7 @@ import (
 )
 
 // NewStartCommand returns start command
-func NewStartCommand(run Runner, isKeepRunning bool) *cobra.Command {
+func NewStartCommand(run Runner) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   CmdStart,
 		Short: "Start the node of blockchain",

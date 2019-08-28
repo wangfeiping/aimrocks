@@ -6,7 +6,7 @@ import (
 )
 
 // NewKeyCommand returns key command
-func NewKeyCommand(run Runner, isKeepRunning bool) *cobra.Command {
+func NewKeyCommand(run Runner) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   CmdKey,
 		Short: "Key commands",

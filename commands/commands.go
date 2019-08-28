@@ -2,6 +2,37 @@ package commands
 
 import "fmt"
 
+// nolint
+const (
+	CmdRoot          = "aimrocksd"
+	CmdStart         = "start"
+	CmdInit          = "init"
+	CmdAccount       = "account"
+	CmdKey           = "key"
+	CmdTx            = "tx"
+	CmdTxSend        = "send"
+	CmdQuery         = "query"
+	CmdVersion       = "version"
+	CmdHelp          = "help"
+	ShortDescription = "A demo for blockchain"
+)
+
+// nolint
+const (
+	FlagVersion      = CmdVersion
+	FlagHome         = "home"
+	FlagConfig       = "config"
+	FlagLog          = "log"
+	FlagCreateConfig = "create-config"
+	FlagFrom         = "from"
+	FlagFromAmount   = "fromamount"
+	FlagTo           = "to"
+	FlagToAmount     = "toamount"
+	FlagRelay        = "relay"
+	FlagTrustNode    = "trust-node"
+	FlagMaxGas       = "max-gas"
+)
+
 var usageTemplate = `Usage:{{if .Runnable}}
   {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
   {{.CommandPath}} [command]{{end}}{{if (or (eq .Use "tx") (eq .Use "account") (eq .Use "key"))}}

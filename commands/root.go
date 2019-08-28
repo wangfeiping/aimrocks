@@ -4,45 +4,14 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strings"
 	"syscall"
 
-	qstarconfig "github.com/QOSGroup/qstars/config"
-	"github.com/QOSGroup/qstars/star"
 	"github.com/cihub/seelog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/wangfeiping/aimrocks/config"
 	"github.com/wangfeiping/aimrocks/log"
-)
-
-// nolint
-const (
-	CmdRoot          = "aimrocksd"
-	CmdStart         = "start"
-	CmdInit          = "init"
-	CmdAccount       = "account"
-	CmdKey           = "key"
-	CmdTx            = "tx"
-	CmdTxSend        = "send"
-	CmdQuery         = "query"
-	CmdVersion       = "version"
-	CmdHelp          = "help"
-	ShortDescription = "A demo for blockchain"
-)
-
-// nolint
-const (
-	FlagVersion    = "version"
-	FlagHome       = "home"
-	FlagFrom       = "from"
-	FlagFromAmount = "fromamount"
-	FlagTo         = "to"
-	FlagToAmount   = "toamount"
-	FlagRelay      = "relay"
-	FlagTrustNode  = "trust-node"
-	FlagMaxGas     = "max-gas"
 )
 
 // Runner is command call function
@@ -67,7 +36,9 @@ func NewRootCommand(versioner Runner) *cobra.Command {
 			}
 
 			if strings.EqualFold(cmd.Use, CmdRoot) ||
-				strings.EqualFold(cmd.Use, CmdVersion) {
+				strings.EqualFold(cmd.Use, CmdVersion) ||
+				(strings.EqualFold(cmd.Use, CmdInit) &&
+					viper.GetBool(FlagCreateConfig)) {
 				// doesn't need init config & log
 				return nil
 			}
@@ -91,44 +62,22 @@ func NewRootCommand(versioner Runner) *cobra.Command {
 }
 
 func initConfig() error {
-	// cfg := &qstarconfig.CLIConfig{
-	// 	QSCChainID:    "dawns-3001",
-	// 	QOSChainID:    "capricorn-3000",
-	// 	QOSNodeURI:    "localhost:26657",
-	// 	QSTARSNodeURI: "localhost:26658"}
-	// config.CreateCLIContextTwo(cdc, cfg)
+	home := viper.GetString(FlagHome)
+	configFile := viper.GetString(FlagConfig)
+	configFile = config.Check(home, configFile)
+	config.Load(home, configFile)
+	log.Debugf("config file: %s", configFile)
+	viper.Set(FlagConfig, configFile)
+	// cfg, err := qstarconfig.InterceptLoadConfig()
+	// if err != nil {
+	// 	log.Error("init config error: ", err)
+	// 	return err
+	// }
 
-	log.Debug("home: ", viper.GetString("home"))
-
-	homeDir := viper.GetString(FlagHome)
-	viper.Set(FlagHome, homeDir)
-	// Sets name for the config file.
-	// Does not include extension.
-	viper.SetConfigName("config")
-	// Adds a path for Viper to search for the config file in.
-	viper.AddConfigPath(filepath.Join(homeDir, "config"))
-	// Can be called multiple times to define multiple search paths.
-	viper.AddConfigPath(homeDir)
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		// stderr, so if we redirect output to json file, this doesn't appear
-		// fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
-	} else if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-		// ignore not found error, return other errors
-		return err
-	}
-
-	cfg, err := qstarconfig.InterceptLoadConfig()
-	if err != nil {
-		log.Error("init config error: ", err)
-		return err
-	}
-
-	log.Debug("QOSNodeURI: ", cfg.QOSNodeURI)
-	log.Debug("QSTARSNodeURI: ", cfg.QSTARSNodeURI)
-	cdc := star.MakeCodec()
-	qstarconfig.CreateCLIContextTwo(cdc, cfg)
+	// log.Debug("QOSNodeURI: ", cfg.QOSNodeURI)
+	// log.Debug("QSTARSNodeURI: ", cfg.QSTARSNodeURI)
+	// cdc := star.MakeCodec()
+	// qstarconfig.CreateCLIContextTwo(cdc, cfg)
 	return nil
 }
 
