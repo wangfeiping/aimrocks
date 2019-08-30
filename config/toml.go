@@ -63,6 +63,12 @@ log = "{{ .LogConfigFile }}"
 
 kepler = "{{ .Kepler }}"
 
+phone = "{{ .Phone }}"
+
+email = "{{ .Email }}"
+
+info = "{{ .Info }}"
+
 qos_chain_id = "{{ .QOSChainID }}"
 
 qsc_chain_id = "{{ .QSCChainID }}"

@@ -19,14 +19,19 @@ const (
 
 // Config wraps configure data
 type Config struct {
-	LogConfigFile       string `mapstructure:"log"`
+	LogConfigFile string `mapstructure:"log"`
+
+	Kepler string `mapstructure:"kepler"`
+	Phone  string `mapstructure:"phone"`
+	Email  string `mapstructure:"email"`
+	Info   string `mapstructure:"info"`
+
 	QOSChainID          string `mapstructure:"qos_chain_id"`
 	QSCChainID          string `mapstructure:"qsc_chain_id"`
 	QOSNodeURI          string `mapstructure:"qos_node_uri"`
 	QSTARSNodeURI       string `mapstructure:"qstars_node_uri"`
 	DirectTOQOS         bool   `mapstructure:"direct_to_qos"`
 	WaitingForQosResult string `mapstructure:"waiting_for_qos_result"`
-	Kepler              string `mapstructure:"kepler"`
 
 	Community   string `mapstructure:"community"`
 	Authormock  string `mapstructure:"authormock"`
@@ -46,11 +51,14 @@ func GetConfig() *Config {
 func DefaultConfig() *Config {
 	c := &Config{
 		LogConfigFile: DefaultLogConfigFile,
-		QSCChainID:    "qstars-test",
-		QOSChainID:    "qos-test",
+		Kepler:        "http://127.0.0.1:8080/kepler/",
+		Phone:         "138xxxxxxxx",
+		Email:         "xxxxxx@examples.xxx",
+		Info:          "QCP testnet.",
+		QSCChainID:    "testnet-aimrocks",
+		QOSChainID:    "aquarius-1000",
 		QOSNodeURI:    "localhost:26657",
-		QSTARSNodeURI: "localhost:26657",
-		Kepler:        "http://127.0.0.1:8080/kepler/"}
+		QSTARSNodeURI: "localhost:26657"}
 	return c
 }
 

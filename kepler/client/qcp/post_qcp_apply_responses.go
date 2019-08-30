@@ -12,6 +12,8 @@ import (
 	"github.com/go-openapi/runtime"
 
 	strfmt "github.com/go-openapi/strfmt"
+
+	models "github.com/wangfeiping/aimrocks/kepler/models"
 )
 
 // PostQcpApplyReader is a Reader for the PostQcpApply structure.
@@ -44,21 +46,23 @@ func NewPostQcpApplyOK() *PostQcpApplyOK {
 OK
 */
 type PostQcpApplyOK struct {
-	Payload int64
+	Payload *models.TypesResult
 }
 
 func (o *PostQcpApplyOK) Error() string {
 	return fmt.Sprintf("[POST /qcp/apply][%d] postQcpApplyOK  %+v", 200, o.Payload)
 }
 
-func (o *PostQcpApplyOK) GetPayload() int64 {
+func (o *PostQcpApplyOK) GetPayload() *models.TypesResult {
 	return o.Payload
 }
 
 func (o *PostQcpApplyOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
+	o.Payload = new(models.TypesResult)
+
 	// response payload
-	if err := consumer.Consume(response.Body(), &o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
 		return err
 	}
 

@@ -78,7 +78,7 @@ func (a *Client) PostQcpApply(params *PostQcpApplyParams) (*PostQcpApplyOK, erro
 		Method:             "POST",
 		PathPattern:        "/qcp/apply",
 		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/x-www-form-urlencoded"},
 		Schemes:            []string{"http"},
 		Params:             params,
 		Reader:             &PostQcpApplyReader{formats: a.formats},
