@@ -99,38 +99,38 @@ func (a *Client) PostQcpApply(params *PostQcpApplyParams) (*PostQcpApplyOK, erro
 }
 
 /*
-PutQcpApplyID 申请审核s
+PutQcpApply 申请审核s
 
 申请审核
 */
-func (a *Client) PutQcpApplyID(params *PutQcpApplyIDParams) (*PutQcpApplyIDOK, error) {
+func (a *Client) PutQcpApply(params *PutQcpApplyParams) (*PutQcpApplyOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewPutQcpApplyIDParams()
+		params = NewPutQcpApplyParams()
 	}
 
 	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "PutQcpApplyID",
+		ID:                 "PutQcpApply",
 		Method:             "PUT",
-		PathPattern:        "/qcp/apply/{id}",
+		PathPattern:        "/qcp/apply",
 		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/x-www-form-urlencoded"},
 		Schemes:            []string{"http"},
 		Params:             params,
-		Reader:             &PutQcpApplyIDReader{formats: a.formats},
+		Reader:             &PutQcpApplyReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*PutQcpApplyIDOK)
+	success, ok := result.(*PutQcpApplyOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for PutQcpApplyID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for PutQcpApply: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

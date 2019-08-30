@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -37,13 +39,24 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 	}
 
 	// apply QCP certificate
-	err = applyCert(client, pubKey, cdc)
+	var applyID int64
+	applyID, err = applyCert(client, pubKey, cdc)
 	if err != nil {
 		log.Errorf("POST /qcp/apply calling error: %v", err)
 		return nil, nil
 	}
+	// log.Debugf("apply id: %d", applyID)
 
 	// issue certificate
+	p := qcp.NewPutQcpApplyParams()
+	p.SetID(applyID)
+	p.SetStatus(1)
+	resp, err := client.Qcp.PutQcpApply(p)
+	if err != nil {
+		log.Errorf("PUT /qcp/apply calling error: %v", err)
+		return nil, nil
+	}
+	log.Debugf("issue apply: %v", resp)
 
 	// get QCP certificate
 
@@ -51,7 +64,7 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 }
 
 func applyCert(client *kepler.Kepler, pubKey string,
-	cdc *wire.Codec) (err error) {
+	cdc *wire.Codec) (id int64, err error) {
 	p := qcp.NewPostQcpApplyParams()
 	p.SetPhone(viper.GetString("phone"))
 	p.SetEmail(viper.GetString("email"))
@@ -61,10 +74,20 @@ func applyCert(client *kepler.Kepler, pubKey string,
 	p.SetQcpPub(pubKey)
 	var resp *qcp.PostQcpApplyOK
 	resp, err = client.Qcp.PostQcpApply(p)
-	if err == nil {
-		log.Debug("QCP apply: ", resp)
-		log.Debug("QCP apply: ", resp.Payload.Data)
+	if err != nil {
+		log.Errorf("apply cert error: %v", err)
+		return
 	}
+	if apply, ok := resp.Payload.Data.(map[string]interface{}); ok {
+		v := apply["id"]
+		// log.Debugf("apply id: %v, %T", v, v)
+		var idStr json.Number
+		if idStr, ok = v.(json.Number); ok {
+			id, err = idStr.Int64()
+			return
+		}
+	}
+	err = errors.New("Can not parse apply response")
 	return
 }
 
