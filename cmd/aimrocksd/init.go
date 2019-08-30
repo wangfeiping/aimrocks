@@ -9,6 +9,9 @@ import (
 	"github.com/QOSGroup/qstars/star"
 	"github.com/QOSGroup/qstars/wire"
 	"github.com/spf13/viper"
+	cmn "github.com/tendermint/tendermint/libs/common"
+	"github.com/wangfeiping/aimrocks/commands"
+	"github.com/wangfeiping/aimrocks/config"
 	kepler "github.com/wangfeiping/aimrocks/kepler/client"
 	"github.com/wangfeiping/aimrocks/kepler/client/key"
 	"github.com/wangfeiping/aimrocks/kepler/client/qcp"
@@ -27,14 +30,11 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 	client := newKeplerClient()
 
 	// key generate
-	privKey, pubKey, err := genKey(client, cdc)
+	_, pubKey, err := genKey(client, cdc)
 	if err != nil {
 		log.Errorf("GET /key/gen calling error: %v", err)
 		return nil, nil
 	}
-	log.Debugf("private key: %s", privKey)
-	log.Debugf("public key: %v", pubKey)
-	// pubKey := "{\"type\":\"tendermint/PubKeyEd25519\",\"value\":\"tnQTl6SjqSIpT5DZDcq8L+penU4y08ddRxLyHUp9/Ws=\"}"
 
 	// apply QCP certificate
 	err = applyCert(client, pubKey, cdc)
@@ -89,6 +89,15 @@ func genKey(client *kepler.Kepler,
 			return
 		}
 	}
+	log.Debugf("public key: %v", pubKey)
+
+	home := viper.GetString(commands.FlagHome)
+	keyFile := config.GetKeyFilePath(home,
+		fmt.Sprintf("%s.pri", viper.GetString("qsc_chain_id")))
+	cmn.MustWriteFile(keyFile, []byte(privKey), 0644)
+	keyFile = config.GetKeyFilePath(home,
+		fmt.Sprintf("%s.pub", viper.GetString("qsc_chain_id")))
+	cmn.MustWriteFile(keyFile, []byte(pubKey), 0644)
 	return
 }
 
