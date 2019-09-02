@@ -8,13 +8,14 @@ import (
 	cmn "github.com/tendermint/tendermint/libs/common"
 )
 
+// no-lint
 var (
-	defaultConfigDir       = "config"
+	DefaultConfigDir       = "config"
 	defaultDataDir         = "data"
 	defaultKeyDir          = "key"
 	defaultConfigFileName  = "config.toml"
 	defaultGenesisJSONName = "genesis.json"
-	defaultConfigFilePath  = filepath.Join(defaultConfigDir, defaultConfigFileName)
+	defaultConfigFilePath  = filepath.Join(DefaultConfigDir, defaultConfigFileName)
 )
 
 var configTemplate *template.Template
@@ -34,7 +35,7 @@ func EnsureRoot(rootDir string) {
 	if err := cmn.EnsureDir(rootDir, 0700); err != nil {
 		cmn.PanicSanity(err.Error())
 	}
-	if err := cmn.EnsureDir(filepath.Join(rootDir, defaultConfigDir), 0700); err != nil {
+	if err := cmn.EnsureDir(filepath.Join(rootDir, DefaultConfigDir), 0700); err != nil {
 		cmn.PanicSanity(err.Error())
 	}
 	if err := cmn.EnsureDir(filepath.Join(rootDir, defaultDataDir), 0700); err != nil {
@@ -56,11 +57,16 @@ func WriteConfigFile(configFilePath string, config *Config) {
 	cmn.MustWriteFile(configFilePath, buffer.Bytes(), 0644)
 }
 
+// GetConfigFilePath returns config file path
+func GetConfigFilePath(home, file string) string {
+	return filepath.Join(home,
+		DefaultConfigDir, file)
+}
+
 // GetKeyFilePath returns key file path
 func GetKeyFilePath(home, file string) string {
 	return filepath.Join(home,
 		defaultKeyDir, file)
-
 }
 
 // Note: any changes to the comments/variables/mapstructure

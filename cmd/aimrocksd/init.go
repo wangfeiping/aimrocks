@@ -22,6 +22,16 @@ import (
 	"github.com/wangfeiping/aimrocks/log"
 )
 
+const (
+	defaultQstarsConfFile = "qstarsconf.toml"
+	defaultQstarsTemplate = `# this is QCP privatekey
+QStarsPrivateKey = "%s"
+QOSChainName = "%s"
+community = ""
+
+`
+)
+
 var chainNodeInit = func() (context.CancelFunc, error) {
 	cdc := star.MakeCodec()
 	log.Infof("chain node init... kepler:\t%s", viper.GetString("kepler"))
@@ -34,11 +44,20 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 	client := newKeplerClient()
 
 	// key generate
-	_, pubKey, err := genKey(client, cdc)
+	privKey, pubKey, err := genKey(client, cdc)
 	if err != nil {
 		log.Errorf("GET /key/gen calling error: %v", err)
 		return nil, nil
 	}
+
+	// create private key config file
+	toml := fmt.Sprintf(defaultQstarsTemplate,
+		privKey.Value,
+		viper.GetString("qos_chain_id"))
+	home := viper.GetString(commands.FlagHome)
+	tomlFile := config.GetConfigFilePath(home,
+		defaultQstarsConfFile)
+	cmn.MustWriteFile(tomlFile, []byte(toml), 0644)
 
 	// apply QCP certificate
 	var applyID int64
@@ -163,7 +182,8 @@ func applyCert(client *kepler.Kepler, cdc *wire.Codec,
 }
 
 func genKey(client *kepler.Kepler,
-	cdc *wire.Codec) (privKey, pubKey string, err error) {
+	cdc *wire.Codec) (priv *keplerkey.KeyValue,
+	pubKey string, err error) {
 	var resp *key.GetKeyGenOK
 	resp, err = client.Key.GetKeyGen(nil)
 	if err != nil {
@@ -171,8 +191,9 @@ func genKey(client *kepler.Kepler,
 	}
 	// log.Debugf("GET /key/gen response: %d, %v",
 	// keyGen.Payload.Code, keyGen.Payload.Data)
-	priv := &keplerkey.KeyValue{}
+	priv = &keplerkey.KeyValue{}
 	pub := &keplerkey.KeyValue{}
+	var privKey string
 	if keys, ok := resp.Payload.Data.(map[string]interface{}); ok {
 		privKey, err = parseKey(priv, keys["privKey"], cdc)
 		if err != nil {

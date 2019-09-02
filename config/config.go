@@ -64,7 +64,7 @@ func DefaultConfig() *Config {
 
 // Check returns actual config file path
 func Check(home, configFile string) string {
-	configDir := filepath.Join(home, "config")
+	configDir := filepath.Join(home, DefaultConfigDir)
 
 	dir, file := filepath.Split(configFile)
 	if dir == "" {
