@@ -11,6 +11,7 @@ require (
 	github.com/go-openapi/runtime v0.19.4
 	github.com/go-openapi/strfmt v0.19.2
 	github.com/go-openapi/swag v0.19.5
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.3.2
 	github.com/tendermint/go-amino v0.15.0

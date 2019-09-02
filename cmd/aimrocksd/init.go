@@ -8,8 +8,10 @@ import (
 	"net/url"
 
 	keplerkey "github.com/QOSGroup/kepler/server/handler/key"
+	keplermodule "github.com/QOSGroup/kepler/server/module"
 	"github.com/QOSGroup/qstars/star"
 	"github.com/QOSGroup/qstars/wire"
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/wangfeiping/aimrocks/commands"
@@ -40,7 +42,7 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 
 	// apply QCP certificate
 	var applyID int64
-	applyID, err = applyCert(client, pubKey, cdc)
+	applyID, err = applyCert(client, cdc, pubKey)
 	if err != nil {
 		log.Errorf("POST /qcp/apply calling error: %v", err)
 		return nil, nil
@@ -48,23 +50,92 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 	// log.Debugf("apply id: %d", applyID)
 
 	// issue certificate
-	p := qcp.NewPutQcpApplyParams()
-	p.SetID(applyID)
-	p.SetStatus(1)
-	resp, err := client.Qcp.PutQcpApply(p)
+	err = issueCert(client, applyID)
 	if err != nil {
-		log.Errorf("PUT /qcp/apply calling error: %v", err)
+		log.Errorf("PUT /qcp/apply applyId: %d, calling error: %v",
+			applyID, err)
 		return nil, nil
 	}
-	log.Debugf("issue apply: %v", resp)
 
 	// get QCP certificate
-
+	err = getQcpCert(client, applyID)
+	if err != nil {
+		log.Errorf("GET /qcp/ca/{applyId:%d} calling error: %v",
+			applyID, err)
+		return nil, nil
+	}
 	return nil, nil
 }
 
-func applyCert(client *kepler.Kepler, pubKey string,
-	cdc *wire.Codec) (id int64, err error) {
+func getQcpCert(client *kepler.Kepler,
+	applyID int64) (err error) {
+	// defer func() {
+	// 	if err := recover(); err != nil {
+	// 		fmt.Println("recover err: ", err)
+	// 	}
+	// }()
+	p := qcp.NewGetQcpCaApplyIDParams()
+	p.SetApplyID(applyID)
+	var resp *qcp.GetQcpCaApplyIDOK
+	resp, err = client.Qcp.GetQcpCaApplyID(p)
+	if err != nil {
+		return
+	}
+	// log.Debugf("QCP cert: %v", resp)
+	// log.Debugf("QCP cert: %v", resp.Payload.Data)
+	ca := &keplermodule.CaQcp{}
+	var data map[string]interface{}
+	var ok bool
+	if data, ok = resp.Payload.Data.(map[string]interface{}); !ok {
+		err = fmt.Errorf("can not parse response data: %v", resp)
+		return
+	}
+	dc := &mapstructure.DecoderConfig{
+		Metadata: nil,
+		Result:   ca,
+		DecodeHook: mapstructure.StringToTimeHookFunc(
+			"2006-01-02T15:04:05-07:00")}
+	var decoder *mapstructure.Decoder
+	decoder, err = mapstructure.NewDecoder(dc)
+	if err != nil {
+		return
+	}
+	err = decoder.Decode(data)
+	if err != nil {
+		return
+	}
+	var bytesCa []byte
+	bytesCa, err = json.Marshal(ca)
+	if err != nil {
+		return
+	}
+	home := viper.GetString(commands.FlagHome)
+	crtFile := config.GetKeyFilePath(home,
+		fmt.Sprintf("%s.crt", viper.GetString("qsc_chain_id")))
+	cmn.MustWriteFile(crtFile, bytesCa, 0644)
+	log.Infof("get QCP cert ok: %d", applyID)
+	return
+}
+
+func issueCert(client *kepler.Kepler,
+	applyID int64) (err error) {
+	p := qcp.NewPutQcpApplyParams()
+	p.SetID(applyID)
+	p.SetStatus(1)
+	var resp *qcp.PutQcpApplyOK
+	resp, err = client.Qcp.PutQcpApply(p)
+	if err != nil {
+		return
+	}
+	if resp.Payload.Code != 0 {
+		err = fmt.Errorf("failed response: %v", resp)
+		return
+	}
+	return
+}
+
+func applyCert(client *kepler.Kepler, cdc *wire.Codec,
+	pubKey string) (id int64, err error) {
 	p := qcp.NewPostQcpApplyParams()
 	p.SetPhone(viper.GetString("phone"))
 	p.SetEmail(viper.GetString("email"))

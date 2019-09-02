@@ -63,6 +63,42 @@ func (a *Client) GetQcpApply(params *GetQcpApplyParams) (*GetQcpApplyOK, error) 
 }
 
 /*
+GetQcpCaApplyID 获取证书s
+
+获取证书，只能访问一次
+*/
+func (a *Client) GetQcpCaApplyID(params *GetQcpCaApplyIDParams) (*GetQcpCaApplyIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetQcpCaApplyIDParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "GetQcpCaApplyID",
+		Method:             "GET",
+		PathPattern:        "/qcp/ca/{applyId}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/x-www-form-urlencoded"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &GetQcpCaApplyIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetQcpCaApplyIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetQcpCaApplyID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
 PostQcpApply 联盟链证书申请s
 
 联盟链证书申请
