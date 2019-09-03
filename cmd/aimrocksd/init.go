@@ -164,16 +164,11 @@ func applyCert(client *kepler.Kepler, cdc *wire.Codec,
 		log.Errorf("apply cert error: %v", err)
 		return
 	}
-	if apply, ok := resp.Payload.Data.(map[string]interface{}); ok {
-		v := apply["id"]
-		// log.Debugf("apply id: %v, %T", v, v)
-		var idStr json.Number
-		if idStr, ok = v.(json.Number); ok {
-			id, err = idStr.Int64()
-			return
-		}
+	apply := &keplermodule.ApplyQcp{}
+	if err = parseResponse(resp.GetPayload(), apply); err != nil {
+		return
 	}
-	err = errors.New("Can not parse apply response")
+	id = apply.Id
 	return
 }
 
@@ -187,18 +182,22 @@ func genKey(client *kepler.Kepler, cdc *wire.Codec,
 	}
 	// log.Debugf("GET /key/gen response: %d, %v",
 	// keyGen.Payload.Code, keyGen.Payload.Data)
-	priv = &keplerkey.KeyValue{}
-	pub := &keplerkey.KeyValue{}
+	keys := &keplerkey.KeyData{}
+	if err = parseResponse(resp.GetPayload(), keys); err != nil {
+		return
+	}
+	priv = &keys.PrivKey
 	var privKey string
-	if keys, ok := resp.Payload.Data.(map[string]interface{}); ok {
-		privKey, err = parseKey(priv, keys["privKey"], cdc)
-		if err != nil {
-			return
-		}
-		pubKey, err = parseKey(pub, keys["pubKey"], cdc)
-		if err != nil {
-			return
-		}
+	var bytes []byte
+	if bytes, err = cdc.MarshalJSON(keys.PubKey); err == nil {
+		pubKey = string(bytes)
+	} else {
+		return
+	}
+	if bytes, err = cdc.MarshalJSON(priv); err == nil {
+		privKey = string(bytes)
+	} else {
+		return
 	}
 	log.Debugf("public key: %v", pubKey)
 
@@ -210,29 +209,6 @@ func genKey(client *kepler.Kepler, cdc *wire.Codec,
 		fmt.Sprintf("%s.pub", name))
 	cmn.MustWriteFile(keyFile, []byte(pubKey), 0644)
 	return
-}
-
-func parseKey(key *keplerkey.KeyValue,
-	data interface{}, cdc *wire.Codec) (string, error) {
-	var ok bool
-	var model map[string]interface{}
-	if model, ok = data.(map[string]interface{}); !ok {
-		return "", fmt.Errorf("Can not parse data to KeyValue: %v", data)
-	}
-	t := model["type"]
-	if key.Type, ok = t.(string); !ok {
-		return "", fmt.Errorf("Can not convert to string: %v", t)
-	}
-	v := model["value"]
-	if key.Value, ok = v.(string); !ok {
-		return "", fmt.Errorf("Can not convert to string: %v", v)
-	}
-	var bytes []byte
-	var err error
-	if bytes, err = cdc.MarshalJSON(key); err != nil {
-		return "", err
-	}
-	return string(bytes), nil
 }
 
 func parseResponse(payload *models.TypesResult, obj interface{}) (err error) {
