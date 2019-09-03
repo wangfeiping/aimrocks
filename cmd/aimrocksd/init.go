@@ -19,6 +19,7 @@ import (
 	kepler "github.com/wangfeiping/aimrocks/kepler/client"
 	"github.com/wangfeiping/aimrocks/kepler/client/key"
 	"github.com/wangfeiping/aimrocks/kepler/client/qcp"
+	"github.com/wangfeiping/aimrocks/kepler/models"
 	"github.com/wangfeiping/aimrocks/log"
 )
 
@@ -42,18 +43,29 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 	// >> qoscli tx init-qcp
 
 	client := newKeplerClient()
+	qcpChainID := viper.GetString("qsc_chain_id")
+	qosChainID := viper.GetString("qos_chain_id")
 
 	// key generate
-	privKey, pubKey, err := genKey(client, cdc)
+	privKey, pubKey, err :=
+		genKey(client, cdc, qcpChainID)
 	if err != nil {
-		log.Errorf("GET /key/gen calling error: %v", err)
+		log.Errorf("generate qcp keys error: %v", err)
+		return nil, nil
+	}
+
+	// cassini key generate
+	_, _, err =
+		genKey(client, cdc, "cassini")
+	if err != nil {
+		log.Errorf("generate cassini keys error: %v", err)
 		return nil, nil
 	}
 
 	// create private key config file
 	toml := fmt.Sprintf(defaultQstarsTemplate,
 		privKey.Value,
-		viper.GetString("qos_chain_id"))
+		qosChainID)
 	home := viper.GetString(commands.FlagHome)
 	tomlFile := config.GetConfigFilePath(home,
 		defaultQstarsConfFile)
@@ -61,9 +73,10 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 
 	// apply QCP certificate
 	var applyID int64
-	applyID, err = applyCert(client, cdc, pubKey)
+	applyID, err = applyCert(client, cdc,
+		pubKey, qcpChainID, qosChainID)
 	if err != nil {
-		log.Errorf("POST /qcp/apply calling error: %v", err)
+		log.Errorf("apply cert error: %v", err)
 		return nil, nil
 	}
 	// log.Debugf("apply id: %d", applyID)
@@ -71,15 +84,15 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 	// issue certificate
 	err = issueCert(client, applyID)
 	if err != nil {
-		log.Errorf("PUT /qcp/apply applyId: %d, calling error: %v",
+		log.Errorf("issue cert (applyId: %d) error: %v",
 			applyID, err)
 		return nil, nil
 	}
 
 	// get QCP certificate
-	err = getQcpCert(client, applyID)
+	err = getQcpCert(client, applyID, qcpChainID)
 	if err != nil {
-		log.Errorf("GET /qcp/ca/{applyId:%d} calling error: %v",
+		log.Errorf("get cert (applyId: %d) error: %v",
 			applyID, err)
 		return nil, nil
 	}
@@ -87,7 +100,7 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 }
 
 func getQcpCert(client *kepler.Kepler,
-	applyID int64) (err error) {
+	applyID int64, name string) (err error) {
 	// defer func() {
 	// 	if err := recover(); err != nil {
 	// 		fmt.Println("recover err: ", err)
@@ -103,24 +116,7 @@ func getQcpCert(client *kepler.Kepler,
 	// log.Debugf("QCP cert: %v", resp)
 	// log.Debugf("QCP cert: %v", resp.Payload.Data)
 	ca := &keplermodule.CaQcp{}
-	var data map[string]interface{}
-	var ok bool
-	if data, ok = resp.Payload.Data.(map[string]interface{}); !ok {
-		err = fmt.Errorf("can not parse response data: %v", resp)
-		return
-	}
-	dc := &mapstructure.DecoderConfig{
-		Metadata: nil,
-		Result:   ca,
-		DecodeHook: mapstructure.StringToTimeHookFunc(
-			"2006-01-02T15:04:05-07:00")}
-	var decoder *mapstructure.Decoder
-	decoder, err = mapstructure.NewDecoder(dc)
-	if err != nil {
-		return
-	}
-	err = decoder.Decode(data)
-	if err != nil {
+	if err = parseResponse(resp.GetPayload(), ca); err != nil {
 		return
 	}
 	var bytesCa []byte
@@ -130,7 +126,7 @@ func getQcpCert(client *kepler.Kepler,
 	}
 	home := viper.GetString(commands.FlagHome)
 	crtFile := config.GetKeyFilePath(home,
-		fmt.Sprintf("%s.crt", viper.GetString("qsc_chain_id")))
+		fmt.Sprintf("%s.crt", name))
 	cmn.MustWriteFile(crtFile, bytesCa, 0644)
 	log.Infof("get QCP cert ok: %d", applyID)
 	return
@@ -154,13 +150,13 @@ func issueCert(client *kepler.Kepler,
 }
 
 func applyCert(client *kepler.Kepler, cdc *wire.Codec,
-	pubKey string) (id int64, err error) {
+	pubKey string, qcpChainID, qosChainID string) (id int64, err error) {
 	p := qcp.NewPostQcpApplyParams()
 	p.SetPhone(viper.GetString("phone"))
 	p.SetEmail(viper.GetString("email"))
 	p.SetInfo(viper.GetString("info"))
-	p.SetQosChainID(viper.GetString("qos_chain_id"))
-	p.SetQcpChainID(viper.GetString("qsc_chain_id"))
+	p.SetQcpChainID(qcpChainID)
+	p.SetQosChainID(qosChainID)
 	p.SetQcpPub(pubKey)
 	var resp *qcp.PostQcpApplyOK
 	resp, err = client.Qcp.PostQcpApply(p)
@@ -181,8 +177,8 @@ func applyCert(client *kepler.Kepler, cdc *wire.Codec,
 	return
 }
 
-func genKey(client *kepler.Kepler,
-	cdc *wire.Codec) (priv *keplerkey.KeyValue,
+func genKey(client *kepler.Kepler, cdc *wire.Codec,
+	name string) (priv *keplerkey.KeyValue,
 	pubKey string, err error) {
 	var resp *key.GetKeyGenOK
 	resp, err = client.Key.GetKeyGen(nil)
@@ -208,10 +204,10 @@ func genKey(client *kepler.Kepler,
 
 	home := viper.GetString(commands.FlagHome)
 	keyFile := config.GetKeyFilePath(home,
-		fmt.Sprintf("%s.pri", viper.GetString("qsc_chain_id")))
+		fmt.Sprintf("%s.pri", name))
 	cmn.MustWriteFile(keyFile, []byte(privKey), 0644)
 	keyFile = config.GetKeyFilePath(home,
-		fmt.Sprintf("%s.pub", viper.GetString("qsc_chain_id")))
+		fmt.Sprintf("%s.pub", name))
 	cmn.MustWriteFile(keyFile, []byte(pubKey), 0644)
 	return
 }
@@ -237,6 +233,30 @@ func parseKey(key *keplerkey.KeyValue,
 		return "", err
 	}
 	return string(bytes), nil
+}
+
+func parseResponse(payload *models.TypesResult, obj interface{}) (err error) {
+	if payload == nil {
+		return errors.New("payload is nil")
+	}
+	var data map[string]interface{}
+	var ok bool
+	if data, ok = payload.Data.(map[string]interface{}); !ok {
+		err = fmt.Errorf("can not parse response data: %v", payload)
+		return
+	}
+	dc := &mapstructure.DecoderConfig{
+		Metadata: nil,
+		Result:   obj,
+		DecodeHook: mapstructure.StringToTimeHookFunc(
+			"2006-01-02T15:04:05-07:00")}
+	var decoder *mapstructure.Decoder
+	decoder, err = mapstructure.NewDecoder(dc)
+	if err != nil {
+		return
+	}
+	err = decoder.Decode(data)
+	return
 }
 
 func newKeplerClient() *kepler.Kepler {
