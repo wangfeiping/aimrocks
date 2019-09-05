@@ -13,11 +13,17 @@ func NewInitCommand(run Runner) *cobra.Command {
 		Use:   CmdInit,
 		Short: "Init the node of blockchain",
 		Run: func(cmd *cobra.Command, args []string) {
-			if viper.GetBool(FlagCreateConfig) {
+			f := cmd.Flag(FlagConfig)
+			if !f.Changed {
+				home := viper.GetString(FlagHome)
+				configFile := config.
+					Check(home, config.DefaultInitConfigFile)
+				viper.Set(FlagConfig, configFile)
+			}
+			if viper.GetBool(FlagCreateInitConfig) {
 				createConfig()
 				return
 			}
-
 			if _, err := run(); err != nil {
 				log.Error("chain node init error: ", err)
 			}
@@ -25,8 +31,8 @@ func NewInitCommand(run Runner) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolP(FlagCreateConfig, "c",
-		false, "Create a new config file")
+	cmd.Flags().BoolP(FlagCreateInitConfig, "c",
+		false, "Create a new init config file")
 
 	return cmd
 }

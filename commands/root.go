@@ -38,7 +38,7 @@ func NewRootCommand(versioner Runner) *cobra.Command {
 			if strings.EqualFold(cmd.Use, CmdRoot) ||
 				strings.EqualFold(cmd.Use, CmdVersion) ||
 				(strings.EqualFold(cmd.Use, CmdInit) &&
-					viper.GetBool(FlagCreateConfig)) {
+					viper.GetBool(FlagCreateInitConfig)) {
 				// doesn't need init config & log
 				return nil
 			}
