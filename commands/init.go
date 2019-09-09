@@ -21,9 +21,10 @@ func NewInitCommand(run Runner) *cobra.Command {
 				viper.Set(FlagConfig, configFile)
 			}
 			if viper.GetBool(FlagCreateInitConfig) {
-				createConfig()
+				createInitConfig()
 				return
 			}
+			loadInitConfig()
 			if _, err := run(); err != nil {
 				log.Error("chain node init error: ", err)
 			}
@@ -37,11 +38,21 @@ func NewInitCommand(run Runner) *cobra.Command {
 	return cmd
 }
 
-func createConfig() {
+func createInitConfig() {
 	home := viper.GetString(FlagHome)
 	configFile := viper.GetString(FlagConfig)
 	configFile = config.Check(home, configFile)
 	config.EnsureRoot(home)
 	config.Create(configFile)
 	log.Infof("Config file created: %s", configFile)
+}
+
+func loadInitConfig() error {
+	home := viper.GetString(FlagHome)
+	configFile := viper.GetString(FlagConfig)
+	configFile = config.Check(home, configFile)
+	config.Load(home, configFile)
+	log.Debugf("config file: %s", configFile)
+	viper.Set(FlagConfig, configFile)
+	return nil
 }

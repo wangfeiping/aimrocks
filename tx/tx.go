@@ -47,7 +47,7 @@ func SendTx(fromAddrs []qbasetypes.Address, fromCoins []types.Coins,
 	log.Debug("to addresses: ", len(toAddrs))
 	log.Debug("to coins: ", len(toCoins))
 
-	from := []string{"oSXr2kEsWgw8L9ydeLOLM9Q8A6g+HhMW5sAdrKkycdDoiLLNrfCkR5P+7gNiYDSuyW390yhbnCv4+PXhhf/O0w=="}
+	from := []string{"R3Fbrh5tAcNmkGkJI5XOeUbWI5+bF4pqhwigu8gth/pCiomYbIkZyXx0KsbH5UIAdV/30Gn6FxyWqdEZsmykIA=="}
 	var result *bank.SendResult
 	var err error
 	// !!! must change max-gas code !!!
