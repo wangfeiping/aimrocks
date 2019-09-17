@@ -51,15 +51,16 @@ func GetConfig() *Config {
 // DefaultConfig creates a default config
 func DefaultConfig() *Config {
 	c := &Config{
-		LogConfigFile: DefaultLogConfigFile,
-		Kepler:        "http://127.0.0.1:8080/kepler/",
-		Phone:         "138xxxxxxxx",
-		Email:         "xxxxxx@examples.xxx",
-		Info:          "QCP testnet.",
-		QSCChainID:    "testnet-aimrocks",
-		QOSChainID:    "aquarius-1000",
-		QOSNodeURI:    "localhost:26657",
-		QSTARSNodeURI: "localhost:26657"}
+		LogConfigFile:       DefaultLogConfigFile,
+		Kepler:              "http://127.0.0.1:8080/kepler/",
+		Phone:               "138xxxxxxxx",
+		Email:               "xxxxxx@examples.xxx",
+		Info:                "QCP testnet.",
+		QSCChainID:          "testnet-aimrocks",
+		QOSChainID:          "aquarius-1000",
+		QOSNodeURI:          "localhost:26657",
+		QSTARSNodeURI:       "localhost:26657",
+		WaitingForQosResult: "3"}
 	return c
 }
 
