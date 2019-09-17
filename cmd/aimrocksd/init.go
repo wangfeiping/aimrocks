@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -120,10 +119,11 @@ func getQcpCert(client *kepler.Kepler,
 		return
 	}
 	var bytesCa []byte
-	bytesCa, err = json.Marshal(ca)
-	if err != nil {
-		return
-	}
+	// bytesCa, err = json.Marshal(ca.Crt)
+	// if err != nil {
+	// 	return
+	// }
+	bytesCa = []byte(ca.Crt)
 	home := viper.GetString(commands.FlagHome)
 	crtFile := config.GetKeyFilePath(home,
 		fmt.Sprintf("%s.crt", name))
