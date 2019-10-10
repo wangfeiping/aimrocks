@@ -2,17 +2,31 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
+	"path/filepath"
 
 	keplerkey "github.com/QOSGroup/kepler/server/handler/key"
 	keplermodule "github.com/QOSGroup/kepler/server/module"
+	"github.com/QOSGroup/qbase/server"
+	"github.com/QOSGroup/qbase/types"
+	"github.com/QOSGroup/qstars/baseapp"
+	"github.com/QOSGroup/qstars/slim"
 	"github.com/QOSGroup/qstars/star"
+	sdk "github.com/QOSGroup/qstars/types"
 	"github.com/QOSGroup/qstars/wire"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
+	go_amino "github.com/tendermint/go-amino"
+	cfg "github.com/tendermint/tendermint/config"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/libs/cli"
+	"github.com/tendermint/tendermint/libs/common"
 	cmn "github.com/tendermint/tendermint/libs/common"
+	tmtypes "github.com/tendermint/tendermint/types"
 	"github.com/wangfeiping/aimrocks/commands"
 	"github.com/wangfeiping/aimrocks/config"
 	kepler "github.com/wangfeiping/aimrocks/kepler/client"
@@ -34,6 +48,7 @@ community = ""
 
 var chainNodeInit = func() (context.CancelFunc, error) {
 	cdc := star.MakeCodec()
+	ctx := baseapp.GetServerContext().ServerContext
 	log.Infof("chain node init... kepler:\t%s", viper.GetString("kepler"))
 
 	// QOS testnet aquarius-1000
@@ -95,7 +110,52 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 			applyID, err)
 		return nil, nil
 	}
+
+	// gen genesis.json
+	// server.InitCmd(ctx, cdc, genBaseCoindGenesisDoc, rootDir)
+	initGenesisJSON(ctx, cdc, qcpChainID, genGenesis)
 	return nil, nil
+}
+
+func initGenesisJSON(ctx *server.Context, cdc *wire.Codec,
+	chainID string, genGenesis server.CustomGenGenesisDocFunc) error {
+	config := ctx.Config
+	config.SetRoot(viper.GetString(cli.HomeFlag))
+
+	// chainID := viper.GetString(flagChainID)
+	// if chainID == "" {
+	// 	chainID = fmt.Sprintf("test-chain-%v", common.RandStr(6))
+	// }
+
+	nodeID, valPubkey, err := server.InitializeNodeValidatorFiles(config)
+	if err != nil {
+		return err
+	}
+
+	config.Moniker = "test" // viper.GetString(flagMoniker)
+
+	genFile := config.GenesisFile()
+
+	// overwrite := viper.GetBool(flagOverwrite)
+	overwrite := false
+	if !overwrite && common.FileExists(genFile) {
+		return fmt.Errorf("genesis.json file already exists: %v", genFile)
+	}
+
+	genesisDoc, err := genGenesis(ctx, cdc, chainID, valPubkey)
+	if err != nil {
+		return err
+	}
+
+	if err = server.SaveGenDoc(genFile, genesisDoc); err != nil {
+		return err
+	}
+
+	toPrint := newPrintInfo(config.Moniker, chainID, nodeID, "", genesisDoc.AppState)
+
+	cfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
+
+	return displayInfo(cdc, toPrint)
 }
 
 func getQcpCert(client *kepler.Kepler,
@@ -248,4 +308,94 @@ func newKeplerClient() *kepler.Kepler {
 	}
 	log.Debugf("parse kepler api: %v", cfg)
 	return kepler.NewHTTPClientWithConfig(nil, cfg)
+}
+
+type printInfo struct {
+	Moniker    string          `json:"moniker"`
+	ChainID    string          `json:"chain_id"`
+	NodeID     string          `json:"node_id"`
+	GenTxsDir  string          `json:"gentxs_dir"`
+	AppMessage json.RawMessage `json:"app_message"`
+}
+
+// nolint: errcheck
+func displayInfo(cdc *go_amino.Codec, info printInfo) error {
+	out, err := cdc.MarshalJSONIndent(info, "", " ")
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(os.Stderr, "%s\n", string(out))
+	return nil
+}
+
+func newPrintInfo(moniker, chainID, nodeID, genTxsDir string,
+	appMessage json.RawMessage) printInfo {
+
+	return printInfo{
+		Moniker:    moniker,
+		ChainID:    chainID,
+		NodeID:     nodeID,
+		GenTxsDir:  genTxsDir,
+		AppMessage: appMessage,
+	}
+}
+
+func genGenesis(ctx *server.Context, cdc *go_amino.Codec,
+	chainID string, nodeValidatorPubKey crypto.PubKey) (tmtypes.GenesisDoc, error) {
+
+	validator := tmtypes.GenesisValidator{
+		PubKey: nodeValidatorPubKey,
+		Power:  10,
+	}
+
+	//addr, _, err := types.GenerateCoinKey(cdc, types.DefaultCLIHome)
+	//if err != nil {
+	//	return tmtypes.GenesisDoc{}, err
+	//}
+
+	acc := slim.AccountCreate("")
+
+	output, err := wire.MarshalJSONIndent(cdc, acc)
+	if err != nil {
+		return tmtypes.GenesisDoc{}, err
+	}
+
+	fmt.Println(string(output))
+	addr, _ := sdk.AccAddressFromBech32(acc.Addr)
+
+	appState, err := genAppState(cdc, addr)
+	if err != nil {
+		return tmtypes.GenesisDoc{}, err
+	}
+
+	return tmtypes.GenesisDoc{
+		ChainID:    chainID,
+		Validators: []tmtypes.GenesisValidator{validator},
+		AppState:   appState,
+	}, nil
+
+}
+
+func genAppState(cdc *go_amino.Codec, addr types.Address) (appState json.RawMessage, err error) {
+
+	appState = json.RawMessage(fmt.Sprintf(`{
+		"qcps":[{
+			"name": "qos",
+			"chain_id": "qos",
+			"pub_key":{
+        		"type": "tendermint/PubKeyEd25519",
+        		"value": "ish2+qpPsoHxf7m+uwi8FOAWw6iMaDZgLKl1la4yMAs="
+			}
+		}],
+  		"accounts": [{
+    		"address": "%s",
+    		"coins": [
+      			{
+        			"coin_name":"qstar",
+        			"amount":"100000000"
+      			}
+			]
+  		}]
+	}`, addr))
+	return
 }

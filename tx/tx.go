@@ -1,6 +1,9 @@
 package tx
 
 import (
+	// "github.com/QOSGroup/qbase/client/context"
+	// clientkeys "github.com/QOSGroup/qbase/client/keys"
+	// "github.com/QOSGroup/qbase/keys"
 	qbasetypes "github.com/QOSGroup/qbase/types"
 	"github.com/QOSGroup/qstars/types"
 	"github.com/QOSGroup/qstars/wire"
@@ -48,8 +51,21 @@ func SendTx(fromAddrs []qbasetypes.Address, fromCoins []types.Coins,
 	log.Debug("to coins: ", len(toCoins))
 
 	from := []string{"mWMFi5yQeEghGgL+dL4zop4US45lvZ1Ag4Ai5J8041Fj3RqLnUtGtc5AVQ0gxFn3enFkWcCTmCw3IH7rFezjkg=="}
-	var result *bank.SendResult
 	var err error
+
+	// ctx := context.NewCLIContext().WithCodec(cdc)
+
+	// keybase, err := clientkeys.GetKeyBase(ctx)
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
+	// var info keys.Info
+	// info, err = keybase.GetByAddress(fromAddrs[0])
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
+
+	var result *bank.SendResult
 	// !!! must change max-gas code !!!
 	if viper.GetBool(commands.FlagRelay) {
 		log.Debug("tx send relay")
