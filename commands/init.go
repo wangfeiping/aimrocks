@@ -17,14 +17,14 @@ func NewInitCommand(run Runner) *cobra.Command {
 			if !f.Changed {
 				home := viper.GetString(FlagHome)
 				configFile := config.
-					Check(home, config.DefaultInitConfigFile)
+					Check(home, config.DefaultInitFile)
 				viper.Set(FlagConfig, configFile)
 			}
-			if viper.GetBool(FlagCreateInitConfig) {
-				createInitConfig()
+			if viper.GetBool(FlagCreateInitFile) {
+				createInitFile()
 				return
 			}
-			loadInitConfig()
+			loadInitFile()
 			if _, err := run(); err != nil {
 				log.Error("chain node init error: ", err)
 			}
@@ -32,27 +32,27 @@ func NewInitCommand(run Runner) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolP(FlagCreateInitConfig, "c",
-		false, "Create a new init config file")
+	cmd.Flags().BoolP(FlagCreateInitFile, "c",
+		false, "Create a new init file")
 
 	return cmd
 }
 
-func createInitConfig() {
+func createInitFile() {
 	home := viper.GetString(FlagHome)
 	configFile := viper.GetString(FlagConfig)
 	configFile = config.Check(home, configFile)
 	config.EnsureRoot(home)
 	config.Create(configFile)
-	log.Infof("Config file created: %s", configFile)
+	log.Infof("init file created: %s", configFile)
 }
 
-func loadInitConfig() error {
+func loadInitFile() error {
 	home := viper.GetString(FlagHome)
 	configFile := viper.GetString(FlagConfig)
 	configFile = config.Check(home, configFile)
 	config.Load(home, configFile)
-	log.Debugf("config file: %s", configFile)
+	log.Debugf("init file loaded: %s", configFile)
 	viper.Set(FlagConfig, configFile)
 	return nil
 }

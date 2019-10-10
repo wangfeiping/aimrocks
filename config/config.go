@@ -12,10 +12,10 @@ import (
 
 // nolint
 const (
-	DefaultHome           = "$HOME/.aimrocks"
-	DefaultInitConfigFile = "init.toml"
-	DefaultConfigFile     = "config.toml"
-	DefaultLogConfigFile  = "log.conf"
+	DefaultHome          = "$HOME/.aimrocks"
+	DefaultInitFile      = "init.toml"
+	DefaultConfigFile    = "config.toml"
+	DefaultLogConfigFile = "log.conf"
 )
 
 // Config wraps configure data
@@ -73,10 +73,10 @@ func Check(home, configFile string) string {
 		dir = configDir
 	}
 	if file == "" {
-		file = DefaultInitConfigFile
+		file = DefaultInitFile
 	}
 	file = filepath.Join(dir, file)
-	if strings.EqualFold(file, DefaultInitConfigFile) {
+	if strings.EqualFold(file, DefaultInitFile) {
 		return configFile
 	}
 	return file
