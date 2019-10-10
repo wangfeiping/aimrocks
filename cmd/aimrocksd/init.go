@@ -65,18 +65,41 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 	privKey, pubKey, err :=
 		genKey(client, cdc, qcpChainID)
 	if err != nil {
-		log.Errorf("generate qcp keys error: %v", err)
+		log.Errorf("generate keys error: %v", err)
 		return nil, nil
 	}
+	var privJSON string
+	var pubJSON string
+	privJSON, err = marshalKey(cdc, privKey)
+	if err != nil {
+		log.Errorf("marshal keys error: %v", err)
+		return nil, nil
+	}
+	pubJSON, err = marshalKey(cdc, pubKey)
+	if err != nil {
+		log.Errorf("marshal keys error: %v", err)
+		return nil, nil
+	}
+	saveKey(qcpChainID, privJSON, pubJSON)
 
 	// cassini key generate
-	var cassiniPubKey string
-	_, cassiniPubKey, err =
+	cassiniPrivKey, cassiniPubKey, err :=
 		genKey(client, cdc, "cassini")
 	if err != nil {
-		log.Errorf("generate cassini keys error: %v", err)
+		log.Errorf("generate keys error: %v", err)
 		return nil, nil
 	}
+	cassiniPrivJSON, err := marshalKey(cdc, cassiniPrivKey)
+	if err != nil {
+		log.Errorf("marshal keys error: %v", err)
+		return nil, nil
+	}
+	cassiniPubJSON, err := marshalKey(cdc, cassiniPubKey)
+	if err != nil {
+		log.Errorf("marshal keys error: %v", err)
+		return nil, nil
+	}
+	saveKey("cassini", cassiniPrivJSON, cassiniPubJSON)
 
 	// create private key config file
 	toml := fmt.Sprintf(defaultQstarsTemplate,
@@ -90,7 +113,7 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 	// apply QCP certificate
 	var applyID int64
 	applyID, err = applyCert(client, cdc,
-		pubKey, qcpChainID, qosChainID)
+		pubJSON, qcpChainID, qosChainID)
 	if err != nil {
 		log.Errorf("apply cert error: %v", err)
 		return nil, nil
@@ -115,12 +138,16 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 
 	// gen genesis.json
 	// server.InitCmd(ctx, cdc, genBaseCoindGenesisDoc, rootDir)
-	initGenesisJSON(ctx, cdc, qcpChainID, cassiniPubKey, createGenesis)
+	err = initGenesisJSON(ctx, cdc,
+		qosChainID, cassiniPubKey, createGenesis)
+	if err != nil {
+		log.Errorf("init genesis (chainId: %s) error: %v", qcpChainID, err)
+	}
 	return nil, nil
 }
 
 func initGenesisJSON(ctx *server.Context, cdc *wire.Codec,
-	chainID string, cassiniPubKey string,
+	chainID string, cassiniPubKey *keplerkey.KeyValue,
 	genGenesis funcCreateGenesisDoc) error {
 	config := ctx.Config
 	config.SetRoot(viper.GetString(cli.HomeFlag))
@@ -237,7 +264,7 @@ func applyCert(client *kepler.Kepler, cdc *wire.Codec,
 
 func genKey(client *kepler.Kepler, cdc *wire.Codec,
 	name string) (priv *keplerkey.KeyValue,
-	pubKey string, err error) {
+	pub *keplerkey.KeyValue, err error) {
 	var resp *key.GetKeyGenOK
 	resp, err = client.Key.GetKeyGen(nil)
 	if err != nil {
@@ -250,28 +277,28 @@ func genKey(client *kepler.Kepler, cdc *wire.Codec,
 		return
 	}
 	priv = &keys.PrivKey
-	var privKey string
-	var bytes []byte
-	if bytes, err = cdc.MarshalJSON(keys.PubKey); err == nil {
-		pubKey = string(bytes)
-	} else {
-		return
-	}
-	if bytes, err = cdc.MarshalJSON(priv); err == nil {
-		privKey = string(bytes)
-	} else {
-		return
-	}
-	log.Debugf("public key: %v", pubKey)
+	pub = &keys.PubKey
+	return
+}
 
+func marshalKey(cdc *go_amino.Codec,
+	keyValue *keplerkey.KeyValue) (keyJSON string, err error) {
+	var bytes []byte
+	if bytes, err = cdc.MarshalJSON(keyValue); err == nil {
+		keyJSON = string(bytes)
+	}
+	return
+}
+
+func saveKey(name string,
+	privJSON string, pubJSON string) {
 	home := viper.GetString(commands.FlagHome)
 	keyFile := config.GetKeyFilePath(home,
 		fmt.Sprintf("%s.pri", name))
-	cmn.MustWriteFile(keyFile, []byte(privKey), 0644)
+	cmn.MustWriteFile(keyFile, []byte(privJSON), 0644)
 	keyFile = config.GetKeyFilePath(home,
 		fmt.Sprintf("%s.pub", name))
-	cmn.MustWriteFile(keyFile, []byte(pubKey), 0644)
-	return
+	cmn.MustWriteFile(keyFile, []byte(pubJSON), 0644)
 }
 
 func parseResponse(payload *models.TypesResult, obj interface{}) (err error) {
@@ -344,11 +371,11 @@ func newPrintInfo(moniker, chainID, nodeID, genTxsDir string,
 }
 
 type funcCreateGenesisDoc func(ctx *server.Context, cdc *go_amino.Codec,
-	chainID string, pubKeyValue string,
+	chainID string, cassiniPubKey *keplerkey.KeyValue,
 	nodeValidatorPubKey crypto.PubKey) (tmtypes.GenesisDoc, error)
 
 func createGenesis(ctx *server.Context, cdc *go_amino.Codec,
-	chainID string, cassiniPubKey string,
+	chainID string, cassiniPubKey *keplerkey.KeyValue,
 	nodeValidatorPubKey crypto.PubKey) (tmtypes.GenesisDoc, error) {
 
 	validator := tmtypes.GenesisValidator{
@@ -384,8 +411,8 @@ func createGenesis(ctx *server.Context, cdc *go_amino.Codec,
 
 }
 
-func genAppState(cdc *go_amino.Codec,
-	chainID string, pubKeyValue string, addr types.Address) (
+func genAppState(cdc *go_amino.Codec, chainID string,
+	cassiniPubKey *keplerkey.KeyValue, addr types.Address) (
 	appState json.RawMessage, err error) {
 	appState = json.RawMessage(fmt.Sprintf(`{
 		"qcps":[{
@@ -405,6 +432,6 @@ func genAppState(cdc *go_amino.Codec,
       			}
 			]
   		}]
-	}`, chainID, pubKeyValue, addr))
+	}`, chainID, cassiniPubKey.Value, addr))
 	return
 }
