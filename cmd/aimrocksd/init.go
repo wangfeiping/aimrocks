@@ -48,6 +48,7 @@ community = ""
 
 var chainNodeInit = func() (context.CancelFunc, error) {
 	cdc := star.MakeCodec()
+	baseapp.InitApp()
 	ctx := baseapp.GetServerContext().ServerContext
 	log.Infof("chain node init... kepler:\t%s", viper.GetString("kepler"))
 
