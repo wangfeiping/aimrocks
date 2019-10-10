@@ -70,7 +70,8 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 	}
 
 	// cassini key generate
-	_, _, err =
+	var cassiniPubKey string
+	_, cassiniPubKey, err =
 		genKey(client, cdc, "cassini")
 	if err != nil {
 		log.Errorf("generate cassini keys error: %v", err)
@@ -114,12 +115,13 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 
 	// gen genesis.json
 	// server.InitCmd(ctx, cdc, genBaseCoindGenesisDoc, rootDir)
-	initGenesisJSON(ctx, cdc, qcpChainID, genGenesis)
+	initGenesisJSON(ctx, cdc, qcpChainID, cassiniPubKey, createGenesis)
 	return nil, nil
 }
 
 func initGenesisJSON(ctx *server.Context, cdc *wire.Codec,
-	chainID string, genGenesis server.CustomGenGenesisDocFunc) error {
+	chainID string, cassiniPubKey string,
+	genGenesis funcCreateGenesisDoc) error {
 	config := ctx.Config
 	config.SetRoot(viper.GetString(cli.HomeFlag))
 
@@ -143,7 +145,7 @@ func initGenesisJSON(ctx *server.Context, cdc *wire.Codec,
 		return fmt.Errorf("genesis.json file already exists: %v", genFile)
 	}
 
-	genesisDoc, err := genGenesis(ctx, cdc, chainID, valPubkey)
+	genesisDoc, err := genGenesis(ctx, cdc, chainID, cassiniPubKey, valPubkey)
 	if err != nil {
 		return err
 	}
@@ -341,8 +343,13 @@ func newPrintInfo(moniker, chainID, nodeID, genTxsDir string,
 	}
 }
 
-func genGenesis(ctx *server.Context, cdc *go_amino.Codec,
-	chainID string, nodeValidatorPubKey crypto.PubKey) (tmtypes.GenesisDoc, error) {
+type funcCreateGenesisDoc func(ctx *server.Context, cdc *go_amino.Codec,
+	chainID string, pubKeyValue string,
+	nodeValidatorPubKey crypto.PubKey) (tmtypes.GenesisDoc, error)
+
+func createGenesis(ctx *server.Context, cdc *go_amino.Codec,
+	chainID string, cassiniPubKey string,
+	nodeValidatorPubKey crypto.PubKey) (tmtypes.GenesisDoc, error) {
 
 	validator := tmtypes.GenesisValidator{
 		PubKey: nodeValidatorPubKey,
@@ -364,7 +371,7 @@ func genGenesis(ctx *server.Context, cdc *go_amino.Codec,
 	fmt.Println(string(output))
 	addr, _ := sdk.AccAddressFromBech32(acc.Addr)
 
-	appState, err := genAppState(cdc, addr)
+	appState, err := genAppState(cdc, chainID, cassiniPubKey, addr)
 	if err != nil {
 		return tmtypes.GenesisDoc{}, err
 	}
@@ -377,15 +384,16 @@ func genGenesis(ctx *server.Context, cdc *go_amino.Codec,
 
 }
 
-func genAppState(cdc *go_amino.Codec, addr types.Address) (appState json.RawMessage, err error) {
-
+func genAppState(cdc *go_amino.Codec,
+	chainID string, pubKeyValue string, addr types.Address) (
+	appState json.RawMessage, err error) {
 	appState = json.RawMessage(fmt.Sprintf(`{
 		"qcps":[{
 			"name": "qos",
-			"chain_id": "qos",
+			"chain_id": "%s",
 			"pub_key":{
         		"type": "tendermint/PubKeyEd25519",
-        		"value": "ish2+qpPsoHxf7m+uwi8FOAWw6iMaDZgLKl1la4yMAs="
+        		"value": "%s"
 			}
 		}],
   		"accounts": [{
@@ -397,6 +405,6 @@ func genAppState(cdc *go_amino.Codec, addr types.Address) (appState json.RawMess
       			}
 			]
   		}]
-	}`, addr))
+	}`, chainID, pubKeyValue, addr))
 	return
 }
