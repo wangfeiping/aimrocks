@@ -50,7 +50,7 @@ func SendTx(fromAddrs []qbasetypes.Address, fromCoins []types.Coins,
 	log.Debug("to addresses: ", len(toAddrs))
 	log.Debug("to coins: ", len(toCoins))
 
-	from := []string{"mWMFi5yQeEghGgL+dL4zop4US45lvZ1Ag4Ai5J8041Fj3RqLnUtGtc5AVQ0gxFn3enFkWcCTmCw3IH7rFezjkg=="}
+	from := []string{"pw632KgJIoIr3/6xJwpcb5UDJ3rFCd2RK459Da3dCj+orYV1TjfC80R1iCKRS7XWcNCEt4FIvPoMHU4/tMFsmA=="}
 	var err error
 
 	// ctx := context.NewCLIContext().WithCodec(cdc)
