@@ -14,6 +14,9 @@ import (
 	"github.com/wangfeiping/aimrocks/log"
 )
 
+// LineBreak would show a break line in comand help info
+var LineBreak = &cobra.Command{Run: func(*cobra.Command, []string) {}}
+
 // Runner is command call function
 type Runner func() (context.CancelFunc, error)
 
@@ -55,7 +58,7 @@ func NewRootCommand(versioner Runner) *cobra.Command {
 		},
 	}
 
-	root.Flags().BoolP("version", "v", false, "Show version info")
+	root.Flags().BoolP("version", "v", false, "show version info")
 
 	return root
 }

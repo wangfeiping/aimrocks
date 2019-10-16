@@ -9,7 +9,7 @@ import (
 func NewQueryCommand(run Runner) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   CmdQuery,
-		Short: "Query commands",
+		Short: "query commands",
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Warn("not implemented yet!")
 		},

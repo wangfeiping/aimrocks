@@ -9,7 +9,7 @@ import (
 func NewAccountCommand(run Runner) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   CmdAccount,
-		Short: "Account commands",
+		Short: "account commands",
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Warn("not implemented yet!")
 		},

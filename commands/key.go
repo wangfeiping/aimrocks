@@ -9,7 +9,7 @@ import (
 func NewKeyCommand(run Runner) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   CmdKey,
-		Short: "Key commands",
+		Short: "key commands",
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Warn("not implemented yet!")
 		},

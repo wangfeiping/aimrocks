@@ -19,18 +19,19 @@ const (
 
 // nolint
 const (
-	FlagVersion        = CmdVersion
-	FlagHome           = "home"
-	FlagConfig         = "config"
-	FlagLog            = "log"
-	FlagCreateInitFile = "create-init-file"
-	FlagFrom           = "from"
-	FlagFromAmount     = "fromamount"
-	FlagTo             = "to"
-	FlagToAmount       = "toamount"
-	FlagRelay          = "relay"
-	FlagTrustNode      = "trust-node"
-	FlagMaxGas         = "max-gas"
+	FlagVersion    = CmdVersion
+	FlagHome       = "home"
+	FlagConfig     = "config"
+	FlagLog        = "log"
+	FlagNew        = "new"
+	FlagFrom       = "from"
+	FlagFromAmount = "fromamount"
+	FlagTo         = "to"
+	FlagToAmount   = "toamount"
+	FlagRelay      = "relay"
+	FlagTrustNode  = "trust-node"
+	FlagMaxGas     = "max-gas"
+	FlagCreator    = "creator"
 )
 
 var usageTemplate = `Usage:{{if .Runnable}}

@@ -9,7 +9,7 @@ import (
 func NewStartCommand(run Runner) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   CmdStart,
-		Short: "Start the node of blockchain",
+		Short: "start the node of blockchain",
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Warn("not implemented yet!")
 		},

@@ -8,7 +8,7 @@ import (
 func NewVersionCommand(run Runner) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   CmdVersion,
-		Short: "Show version info",
+		Short: "show version info",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			run()
 			return nil

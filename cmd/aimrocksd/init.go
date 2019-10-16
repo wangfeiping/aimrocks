@@ -9,10 +9,16 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/QOSGroup/kepler/cert"
 	keplerkey "github.com/QOSGroup/kepler/server/handler/key"
 	keplermodule "github.com/QOSGroup/kepler/server/module"
+	qcliacc "github.com/QOSGroup/qbase/client/account"
+	qclicontext "github.com/QOSGroup/qbase/client/context"
+	qclitx "github.com/QOSGroup/qbase/client/tx"
 	"github.com/QOSGroup/qbase/server"
+	"github.com/QOSGroup/qbase/txs"
 	"github.com/QOSGroup/qbase/types"
+	qmtxs "github.com/QOSGroup/qos/module/qcp/txs"
 	"github.com/QOSGroup/qstars/baseapp"
 	"github.com/QOSGroup/qstars/slim"
 	"github.com/QOSGroup/qstars/star"
@@ -129,7 +135,8 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 	}
 
 	// get QCP certificate
-	err = getQcpCert(client, applyID, qcpChainID)
+	var ca *keplermodule.CaQcp
+	ca, err = getQcpCert(client, applyID, qcpChainID)
 	if err != nil {
 		log.Errorf("get cert (applyId: %d) error: %v",
 			applyID, err)
@@ -142,8 +149,38 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 		qosChainID, cassiniPubKey, createGenesis)
 	if err != nil {
 		log.Errorf("init genesis (chainId: %s) error: %v", qcpChainID, err)
+		return nil, nil
+	}
+
+	err = registerQCP(ca, cdc)
+	if err != nil {
+		log.Errorf("init genesis (chainId: %s) error: %v", qcpChainID, err)
 	}
 	return nil, nil
+}
+
+func registerQCP(qcpCa *keplermodule.CaQcp, cdc *wire.Codec) error {
+	return qclitx.BroadcastTxAndPrintResult(cdc, func(ctx qclicontext.CLIContext) (txs.ITx, error) {
+		creatorAddr, err := qcliacc.GetAddrFromFlag(ctx, commands.FlagCreator)
+		if err != nil {
+			return nil, err
+		}
+
+		var crt = cert.Certificate{}
+		err = cdc.UnmarshalJSON([]byte(qcpCa.Crt), &crt)
+		if err != nil {
+			return nil, err
+		}
+
+		_, ok := crt.CSR.Subj.(cert.QCPSubject)
+		if !ok {
+			return nil, errors.New("invalid crt file")
+		}
+
+		return qmtxs.TxInitQCP{
+			Creator: creatorAddr,
+			QCPCA:   &crt}, nil
+	})
 }
 
 func initGenesisJSON(ctx *server.Context, cdc *wire.Codec,
@@ -189,7 +226,7 @@ func initGenesisJSON(ctx *server.Context, cdc *wire.Codec,
 }
 
 func getQcpCert(client *kepler.Kepler,
-	applyID int64, name string) (err error) {
+	applyID int64, name string) (ca *keplermodule.CaQcp, err error) {
 	// defer func() {
 	// 	if err := recover(); err != nil {
 	// 		fmt.Println("recover err: ", err)
@@ -204,7 +241,7 @@ func getQcpCert(client *kepler.Kepler,
 	}
 	// log.Debugf("QCP cert: %v", resp)
 	// log.Debugf("QCP cert: %v", resp.Payload.Data)
-	ca := &keplermodule.CaQcp{}
+	ca = &keplermodule.CaQcp{}
 	if err = parseResponse(resp.GetPayload(), ca); err != nil {
 		return
 	}

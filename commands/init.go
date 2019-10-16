@@ -11,7 +11,7 @@ import (
 func NewInitCommand(run Runner) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   CmdInit,
-		Short: "Init the node of blockchain",
+		Short: "init the node of blockchain",
 		Run: func(cmd *cobra.Command, args []string) {
 			f := cmd.Flag(FlagConfig)
 			if !f.Changed {
@@ -20,7 +20,7 @@ func NewInitCommand(run Runner) *cobra.Command {
 					Check(home, config.DefaultInitFile)
 				viper.Set(FlagConfig, configFile)
 			}
-			if viper.GetBool(FlagCreateInitFile) {
+			if viper.GetBool(FlagNew) {
 				createInitFile()
 				return
 			}
@@ -32,9 +32,10 @@ func NewInitCommand(run Runner) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolP(FlagCreateInitFile, "c",
-		false, "Create a new init file")
-
+	cmd.Flags().BoolP(FlagNew, "n",
+		false, "generate a new init file")
+	cmd.Flags().BoolP(FlagCreator, "c",
+		false, "creator's account for the qcp chain")
 	return cmd
 }
 
