@@ -13,7 +13,7 @@ import (
 // nolint
 const (
 	DefaultHome          = "$HOME/.aimrocks"
-	DefaultInitFile      = "init.toml"
+	DefaultClientFile    = "client.toml"
 	DefaultConfigFile    = "config.toml"
 	DefaultLogConfigFile = "log.conf"
 )
@@ -42,10 +42,21 @@ type Config struct {
 }
 
 var conf = DefaultConfig()
+var defaultConfigFile string
 
 // GetConfig returns the config instance
 func GetConfig() *Config {
 	return conf
+}
+
+// GetDefaultConfigFile returns the default config file
+func GetDefaultConfigFile() string {
+	return defaultConfigFile
+}
+
+// SetDefaultConfigFile sets the default config file
+func SetDefaultConfigFile(configFile string) {
+	defaultConfigFile = configFile
 }
 
 // DefaultConfig creates a default config
@@ -73,11 +84,11 @@ func Check(home, configFile string) string {
 		dir = configDir
 	}
 	if file == "" {
-		file = DefaultInitFile
+		file = GetDefaultConfigFile()
 	}
 	file = filepath.Join(dir, file)
-	if strings.EqualFold(file, DefaultInitFile) {
-		return configFile
+	if strings.Index(file, string(filepath.Separator)) < 0 {
+		return fmt.Sprintf(".%s%s", string(filepath.Separator), file)
 	}
 	return file
 }
@@ -99,8 +110,7 @@ func Create(configFilePath string) {
 }
 
 // Load loads config data from file
-func Load(home, configFile string) {
-	log.Debug("home: ", home)
+func Load(configFile string) {
 	log.Debug("config: ", configFile)
 
 	viper.SetConfigFile(configFile)

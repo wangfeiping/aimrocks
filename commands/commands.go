@@ -1,6 +1,11 @@
 package commands
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/spf13/viper"
+	"github.com/wangfeiping/aimrocks/config"
+)
 
 // nolint
 const (
@@ -77,4 +82,12 @@ func Init(cmdRoot string) {
 // GetCmdRoot returns the value of root cmd
 func GetCmdRoot() string {
 	return rootCmd
+}
+
+func checkConfigFilePath() string {
+	home := viper.GetString(FlagHome)
+	configFile := viper.GetString(FlagConfig)
+	configFile = config.Check(home, configFile)
+	viper.Set(FlagConfig, configFile)
+	return configFile
 }

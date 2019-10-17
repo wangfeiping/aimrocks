@@ -37,23 +37,21 @@ func NewRootCommand(versioner Runner) *cobra.Command {
 				log.Error("bind flags error: ", err)
 				return err
 			}
-
 			if strings.EqualFold(cmd.Use, GetCmdRoot()) ||
-				strings.EqualFold(cmd.Use, CmdVersion) ||
-				strings.EqualFold(cmd.Use, CmdInit) {
+				strings.EqualFold(cmd.Use, CmdVersion) {
 				// doesn't need init config & log
 				return nil
 			}
-
+			checkConfigFilePath()
+			if strings.EqualFold(cmd.Use, CmdInit) {
+				return nil
+			}
 			loadConfig()
-
 			if !strings.EqualFold(cmd.Use, CmdStart) {
 				// doesn't need init log
 				return nil
 			}
-
 			initLogger()
-
 			return
 		},
 	}
@@ -64,12 +62,9 @@ func NewRootCommand(versioner Runner) *cobra.Command {
 }
 
 func loadConfig() error {
-	home := viper.GetString(FlagHome)
 	configFile := viper.GetString(FlagConfig)
-	configFile = config.Check(home, configFile)
-	config.Load(home, configFile)
+	config.Load(configFile)
 	log.Debugf("config file: %s", configFile)
-	viper.Set(FlagConfig, configFile)
 	return nil
 }
 

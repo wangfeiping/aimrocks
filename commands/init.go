@@ -13,13 +13,6 @@ func NewInitCommand(run Runner) *cobra.Command {
 		Use:   CmdInit,
 		Short: "init the node of blockchain",
 		Run: func(cmd *cobra.Command, args []string) {
-			f := cmd.Flag(FlagConfig)
-			if !f.Changed {
-				home := viper.GetString(FlagHome)
-				configFile := config.
-					Check(home, config.DefaultInitFile)
-				viper.Set(FlagConfig, configFile)
-			}
 			if viper.GetBool(FlagNew) {
 				createInitFile()
 				return
@@ -42,18 +35,15 @@ func NewInitCommand(run Runner) *cobra.Command {
 func createInitFile() {
 	home := viper.GetString(FlagHome)
 	configFile := viper.GetString(FlagConfig)
-	configFile = config.Check(home, configFile)
 	config.EnsureRoot(home)
 	config.Create(configFile)
 	log.Infof("init file created: %s", configFile)
 }
 
 func loadInitFile() error {
-	home := viper.GetString(FlagHome)
 	configFile := viper.GetString(FlagConfig)
-	configFile = config.Check(home, configFile)
-	config.Load(home, configFile)
-	log.Debugf("init file loaded: %s", configFile)
+	config.Load(configFile)
 	viper.Set(FlagConfig, configFile)
+	log.Debugf("init file loaded: %s", configFile)
 	return nil
 }
