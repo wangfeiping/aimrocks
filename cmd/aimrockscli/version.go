@@ -17,7 +17,7 @@ var (
 
 var versioner = func() (context.CancelFunc, error) {
 
-	s := `AimRocksD - %s
+	s := `AimRocksCli - %s
 version:	%s
 revision:	%s
 compile:	%s

@@ -8,4 +8,4 @@ go build --ldflags "-X main.Version=v0.0.0 \
     -X main.GitCommit=$(git rev-parse HEAD) \
     -X 'main.BuidDate=$buildDate' \
     -X 'main.GoVersion=$goVersion'" \
-    -o ./build/aimrocksd ./cmd/aimrocksd/
+    -o ./build/aimrockscli ./cmd/aimrockscli/

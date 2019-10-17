@@ -23,7 +23,7 @@ type Runner func() (context.CancelFunc, error)
 // NewRootCommand returns root command
 func NewRootCommand(versioner Runner) *cobra.Command {
 	root := &cobra.Command{
-		Use:   CmdRoot,
+		Use:   GetCmdRoot(),
 		Short: ShortDescription,
 		Run: func(cmd *cobra.Command, args []string) {
 			if viper.GetBool(FlagVersion) {
@@ -38,7 +38,7 @@ func NewRootCommand(versioner Runner) *cobra.Command {
 				return err
 			}
 
-			if strings.EqualFold(cmd.Use, CmdRoot) ||
+			if strings.EqualFold(cmd.Use, GetCmdRoot()) ||
 				strings.EqualFold(cmd.Use, CmdVersion) ||
 				strings.EqualFold(cmd.Use, CmdInit) {
 				// doesn't need init config & log

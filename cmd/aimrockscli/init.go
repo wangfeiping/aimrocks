@@ -154,7 +154,7 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 
 	err = registerQCP(ca, cdc)
 	if err != nil {
-		log.Errorf("init genesis (chainId: %s) error: %v", qcpChainID, err)
+		log.Errorf("register qcp (chainId: %s) error: %v", qcpChainID, err)
 	}
 	return nil, nil
 }
@@ -252,7 +252,7 @@ func getQcpCert(client *kepler.Kepler,
 	// }
 	bytesCa = []byte(ca.Crt)
 	home := viper.GetString(commands.FlagHome)
-	crtFile := config.GetKeyFilePath(home,
+	crtFile := config.GetKeysFilePath(home,
 		fmt.Sprintf("%s.crt", name))
 	cmn.MustWriteFile(crtFile, bytesCa, 0644)
 	log.Infof("get QCP cert ok: %d", applyID)
@@ -330,10 +330,10 @@ func marshalKey(cdc *go_amino.Codec,
 func saveKey(name string,
 	privJSON string, pubJSON string) {
 	home := viper.GetString(commands.FlagHome)
-	keyFile := config.GetKeyFilePath(home,
+	keyFile := config.GetKeysFilePath(home,
 		fmt.Sprintf("%s.pri", name))
 	cmn.MustWriteFile(keyFile, []byte(privJSON), 0644)
-	keyFile = config.GetKeyFilePath(home,
+	keyFile = config.GetKeysFilePath(home,
 		fmt.Sprintf("%s.pub", name))
 	cmn.MustWriteFile(keyFile, []byte(pubJSON), 0644)
 }

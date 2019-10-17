@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/QOSGroup/qos/app"
 	"github.com/spf13/cobra"
 	"github.com/wangfeiping/aimrocks/commands"
 	"github.com/wangfeiping/aimrocks/config"
@@ -14,14 +15,14 @@ func main() {
 
 	// disable sorting
 	cobra.EnableCommandSorting = false
+	cdc := app.MakeCodec()
+	commands.Init(commands.CmdRootCLI)
 
 	root := commands.NewRootCommand(versioner)
 	root.AddCommand(
-		commands.NewStartCommand(nil),
-		commands.LineBreak,
 		commands.NewInitCommand(chainNodeInit),
 		commands.NewAccountCommand(nil),
-		commands.NewKeyCommand(nil),
+		commands.NewKeysCommand(cdc),
 		commands.NewTxCommand(txSend),
 		commands.NewQueryCommand(nil),
 		commands.NewVersionCommand(versioner))

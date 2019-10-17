@@ -4,7 +4,7 @@ import "fmt"
 
 // nolint
 const (
-	CmdRoot          = "aimrocksd"
+	CmdRootCLI       = "aimrockscli"
 	CmdStart         = "start"
 	CmdInit          = "init"
 	CmdAccount       = "account"
@@ -36,7 +36,7 @@ const (
 
 var usageTemplate = `Usage:{{if .Runnable}}
   {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
-  {{.CommandPath}} [command]{{end}}{{if (or (eq .Use "tx") (eq .Use "account") (eq .Use "key"))}}
+  {{.CommandPath}} [command]{{end}}{{if (or (eq .Use "tx") (eq .Use "account"))}}
 
 Query:
   %s %s {{.Use}} [flags]{{end}}{{if gt (len .Aliases) 0}}
@@ -62,6 +62,19 @@ Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
 Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
 `
 
-func init() {
-	usageTemplate = fmt.Sprintf(usageTemplate, CmdRoot, CmdQuery)
+var rootCmd string
+
+// func init() {
+// 	usageTemplate = fmt.Sprintf(usageTemplate, "aimrocksd", CmdQuery)
+// }
+
+// Init the tamplate of usage info
+func Init(cmdRoot string) {
+	rootCmd = cmdRoot
+	usageTemplate = fmt.Sprintf(usageTemplate, cmdRoot, CmdQuery)
+}
+
+// GetCmdRoot returns the value of root cmd
+func GetCmdRoot() string {
+	return rootCmd
 }

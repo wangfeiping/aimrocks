@@ -12,7 +12,7 @@ import (
 var (
 	DefaultConfigDir       = "config"
 	defaultDataDir         = "data"
-	defaultKeyDir          = "key"
+	defaultKeysDir         = "keys"
 	defaultConfigFileName  = "config.toml"
 	defaultGenesisJSONName = "genesis.json"
 	defaultConfigFilePath  = filepath.Join(DefaultConfigDir, defaultConfigFileName)
@@ -41,7 +41,7 @@ func EnsureRoot(rootDir string) {
 	if err := cmn.EnsureDir(filepath.Join(rootDir, defaultDataDir), 0700); err != nil {
 		panic(err.Error())
 	}
-	if err := cmn.EnsureDir(filepath.Join(rootDir, defaultKeyDir), 0700); err != nil {
+	if err := cmn.EnsureDir(filepath.Join(rootDir, defaultKeysDir), 0700); err != nil {
 		panic(err.Error())
 	}
 }
@@ -63,10 +63,10 @@ func GetConfigFilePath(home, file string) string {
 		DefaultConfigDir, file)
 }
 
-// GetKeyFilePath returns key file path
-func GetKeyFilePath(home, file string) string {
+// GetKeysFilePath returns key file path
+func GetKeysFilePath(home, file string) string {
 	return filepath.Join(home,
-		defaultKeyDir, file)
+		defaultKeysDir, file)
 }
 
 // Note: any changes to the comments/variables/mapstructure
