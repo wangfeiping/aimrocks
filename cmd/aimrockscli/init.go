@@ -20,10 +20,7 @@ import (
 	"github.com/QOSGroup/qbase/types"
 	qmtxs "github.com/QOSGroup/qos/module/qcp/txs"
 	"github.com/QOSGroup/qstars/baseapp"
-	"github.com/QOSGroup/qstars/slim"
-	"github.com/QOSGroup/qstars/star"
 	sdk "github.com/QOSGroup/qstars/types"
-	"github.com/QOSGroup/qstars/wire"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 	go_amino "github.com/tendermint/go-amino"
@@ -33,6 +30,7 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	tmtypes "github.com/tendermint/tendermint/types"
+	"github.com/wangfeiping/aimrocks/app"
 	"github.com/wangfeiping/aimrocks/commands"
 	"github.com/wangfeiping/aimrocks/config"
 	kepler "github.com/wangfeiping/aimrocks/kepler/client"
@@ -53,7 +51,7 @@ community = ""
 )
 
 var chainNodeInit = func() (context.CancelFunc, error) {
-	cdc := star.MakeCodec()
+	cdc := app.MakeCodec()
 	baseapp.InitApp()
 	ctx := baseapp.GetServerContext().ServerContext
 	log.Infof("chain node init... kepler:\t%s", viper.GetString("kepler"))
@@ -159,7 +157,7 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 	return nil, nil
 }
 
-func registerQCP(qcpCa *keplermodule.CaQcp, cdc *wire.Codec) error {
+func registerQCP(qcpCa *keplermodule.CaQcp, cdc *app.Codec) error {
 	return qclitx.BroadcastTxAndPrintResult(cdc, func(ctx qclicontext.CLIContext) (txs.ITx, error) {
 		creatorAddr, err := qcliacc.GetAddrFromFlag(ctx, commands.FlagCreator)
 		if err != nil {
@@ -183,7 +181,7 @@ func registerQCP(qcpCa *keplermodule.CaQcp, cdc *wire.Codec) error {
 	})
 }
 
-func initGenesisJSON(ctx *server.Context, cdc *wire.Codec,
+func initGenesisJSON(ctx *server.Context, cdc *app.Codec,
 	chainID string, cassiniPubKey *keplerkey.KeyValue,
 	genGenesis funcCreateGenesisDoc) error {
 	config := ctx.Config
@@ -276,7 +274,7 @@ func issueCert(client *kepler.Kepler,
 	return
 }
 
-func applyCert(client *kepler.Kepler, cdc *wire.Codec,
+func applyCert(client *kepler.Kepler, cdc *app.Codec,
 	pubKey string, qcpChainID, qosChainID string) (id int64, err error) {
 	p := qcp.NewPostQcpApplyParams()
 	p.SetPhone(viper.GetString("phone"))
@@ -299,7 +297,7 @@ func applyCert(client *kepler.Kepler, cdc *wire.Codec,
 	return
 }
 
-func genKey(client *kepler.Kepler, cdc *wire.Codec,
+func genKey(client *kepler.Kepler, cdc *app.Codec,
 	name string) (priv *keplerkey.KeyValue,
 	pub *keplerkey.KeyValue, err error) {
 	var resp *key.GetKeyGenOK
@@ -425,9 +423,9 @@ func createGenesis(ctx *server.Context, cdc *go_amino.Codec,
 	//	return tmtypes.GenesisDoc{}, err
 	//}
 
-	acc := slim.AccountCreate("")
+	acc := app.MockAccount()
 
-	output, err := wire.MarshalJSONIndent(cdc, acc)
+	output, err := app.MarshalJSONIndent(cdc, acc)
 	if err != nil {
 		return tmtypes.GenesisDoc{}, err
 	}
