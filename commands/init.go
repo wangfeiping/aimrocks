@@ -28,7 +28,7 @@ func NewInitCommand(run Runner) *cobra.Command {
 	cmd.Flags().BoolP(FlagNew, "n",
 		false, "generate a new init file")
 	cmd.Flags().BoolP(FlagCreator, "c",
-		false, "creator's account for the qcp chain")
+		false, "creator's account(key's name or address) for the qcp chain")
 	return cmd
 }
 
