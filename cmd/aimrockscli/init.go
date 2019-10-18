@@ -19,8 +19,6 @@ import (
 	"github.com/QOSGroup/qbase/txs"
 	"github.com/QOSGroup/qbase/types"
 	qmtxs "github.com/QOSGroup/qos/module/qcp/txs"
-	"github.com/QOSGroup/qstars/baseapp"
-	sdk "github.com/QOSGroup/qstars/types"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 	go_amino "github.com/tendermint/go-amino"
@@ -52,11 +50,12 @@ community = ""
 
 var chainNodeInit = func() (context.CancelFunc, error) {
 	cdc := app.MakeCodec()
-	baseapp.InitApp()
-	ctx := baseapp.GetServerContext().ServerContext
+	// baseapp.InitApp()
+	// ctx := baseapp.GetServerContext().ServerContext
+	ctx := app.InitApp().ServerContext
 	log.Infof("chain node init... kepler:\t%s", viper.GetString("kepler"))
 
-	// QOS testnet aquarius-1000
+	// QOS testnet aquarius-2001
 	// init QCP
 	// http://docs.qoschain.info/qos/command/qoscli.html
 	// >> qoscli tx init-qcp
@@ -431,7 +430,7 @@ func createGenesis(ctx *server.Context, cdc *go_amino.Codec,
 	}
 
 	fmt.Println(string(output))
-	addr, _ := sdk.AccAddressFromBech32(acc.Addr)
+	addr, _ := types.AccAddressFromBech32(acc.Addr)
 
 	appState, err := genAppState(cdc, chainID, cassiniPubKey, addr)
 	if err != nil {
