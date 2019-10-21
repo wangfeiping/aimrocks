@@ -157,27 +157,35 @@ var chainNodeInit = func() (context.CancelFunc, error) {
 }
 
 func registerQCP(qcpCa *keplermodule.CaQcp, cdc *app.Codec) error {
-	return qclitx.BroadcastTxAndPrintResult(cdc, func(ctx qclicontext.CLIContext) (txs.ITx, error) {
-		creatorAddr, err := qcliacc.GetAddrFromFlag(ctx, commands.FlagCreator)
-		if err != nil {
-			return nil, err
-		}
+	return qclitx.BroadcastTxAndPrintResult(cdc,
+		func(ctx qclicontext.CLIContext) (txs.ITx, error) {
+			creatorAddr, err := qcliacc.GetAddrFromFlag(
+				ctx, commands.FlagCreator)
+			log.Debugf("creator: %s", viper.GetString(commands.FlagCreator))
+			log.Debugf("creator addr: %v", creatorAddr)
+			log.Debugf("prefix: %s",
+				types.GetAddressConfig().GetBech32AccountAddrPrefix())
+			log.Debugf("home: %s", viper.GetString("home"))
+			if err != nil {
+				log.Errorf("check creator's address error: %v", err)
+				return nil, err
+			}
 
-		var crt = cert.Certificate{}
-		err = cdc.UnmarshalJSON([]byte(qcpCa.Crt), &crt)
-		if err != nil {
-			return nil, err
-		}
+			var crt = cert.Certificate{}
+			err = cdc.UnmarshalJSON([]byte(qcpCa.Crt), &crt)
+			if err != nil {
+				return nil, err
+			}
 
-		_, ok := crt.CSR.Subj.(cert.QCPSubject)
-		if !ok {
-			return nil, errors.New("invalid crt file")
-		}
+			_, ok := crt.CSR.Subj.(cert.QCPSubject)
+			if !ok {
+				return nil, errors.New("invalid crt file")
+			}
 
-		return qmtxs.TxInitQCP{
-			Creator: creatorAddr,
-			QCPCA:   &crt}, nil
-	})
+			return qmtxs.TxInitQCP{
+				Creator: creatorAddr,
+				QCPCA:   &crt}, nil
+		})
 }
 
 func initGenesisJSON(ctx *server.Context, cdc *app.Codec,

@@ -1,5 +1,6 @@
 package app
 
+// ResultCreateAccount wraps result of create account
 type ResultCreateAccount struct {
 	PubKey   string `json:"pubKey"`
 	PrivKey  string `json:"privKey"`

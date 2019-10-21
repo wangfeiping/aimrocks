@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 
-	"github.com/QOSGroup/qbase/baseabci"
+	// "github.com/QOSGroup/kepler/cert"
+	// "github.com/QOSGroup/qbase/baseabci"
+	// "github.com/QOSGroup/qbase/txs"
+	"github.com/QOSGroup/qos/app"
 	"github.com/tendermint/go-amino"
 )
 
@@ -13,7 +16,10 @@ type Codec = amino.Codec
 
 // MakeCodec returns a well-setting cdc via the funcation for both client and server
 func MakeCodec() *Codec {
-	cdc := baseabci.MakeQBaseCodec()
+	// cdc := baseabci.MakeQBaseCodec()
+	// cert.RegisterCodec(cdc)
+	// txs.RegisterCodec(cdc)
+	cdc := app.MakeCodec()
 	return cdc
 }
 
