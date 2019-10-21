@@ -12,7 +12,7 @@ import (
 
 // nolint
 const (
-	DefaultHome          = "$HOME/.aimrocks"
+	DefaultClientHome    = "$HOME/.aimrockscli"
 	DefaultClientFile    = "client.toml"
 	DefaultConfigFile    = "config.toml"
 	DefaultLogConfigFile = "log.conf"
@@ -43,10 +43,21 @@ type Config struct {
 
 var conf = DefaultConfig()
 var defaultConfigFile string
+var defaultHome string
 
 // GetConfig returns the config instance
 func GetConfig() *Config {
 	return conf
+}
+
+// SetDefaultHome sets the default home dir
+func SetDefaultHome(home string) {
+	defaultHome = home
+}
+
+// GetDefaultHome returns the default home dir
+func GetDefaultHome() string {
+	return defaultHome
 }
 
 // GetDefaultConfigFile returns the default config file

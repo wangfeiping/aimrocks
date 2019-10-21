@@ -16,6 +16,7 @@ func main() {
 	// disable sorting
 	cobra.EnableCommandSorting = false
 	cdc := app.MakeCodec()
+	config.SetDefaultHome(config.DefaultClientHome)
 	config.SetDefaultConfigFile(config.DefaultClientFile)
 	commands.Init(commands.CmdRootCLI)
 
@@ -28,7 +29,7 @@ func main() {
 		commands.NewQueryCommand(nil),
 		commands.NewVersionCommand(versioner))
 
-	defaultHome := os.ExpandEnv(config.DefaultHome)
+	defaultHome := os.ExpandEnv(config.GetDefaultHome())
 	root.PersistentFlags().String(
 		commands.FlagHome,
 		defaultHome, "directory for config and data")
